@@ -1,6 +1,3 @@
--- Vexium UI Library
--- Client-side UI module. Require this from a LocalScript.
-
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")

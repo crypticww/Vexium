@@ -1,23 +1,15 @@
+-- Vexium UI Library
+-- Uses StarterGui.cryptic as its visual source so runtime controls keep the
+-- exact properties, images, fonts, and layout from the project mockup.
+
 local Players = game:GetService("Players")
+local StarterGui = game:GetService("StarterGui")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
 local library = {}
-
-local COLORS = {
-	Panel = Color3.fromRGB(43, 43, 43),
-	PanelDark = Color3.fromRGB(26, 26, 26),
-	Row = Color3.fromRGB(33, 33, 33),
-	RowHover = Color3.fromRGB(43, 43, 43),
-	Text = Color3.fromRGB(225, 225, 225),
-	MutedText = Color3.fromRGB(150, 150, 150),
-	Stroke = Color3.fromRGB(59, 59, 59),
-	Accent = Color3.fromRGB(39, 46, 89),
-	AccentBright = Color3.fromRGB(73, 105, 190),
-	SwitchOff = Color3.fromRGB(66, 66, 66),
-	Danger = Color3.fromRGB(151, 57, 67),
-}
+local DEFAULT_TOP_BAR_COLOR = Color3.fromRGB(39, 46, 89)
 
 local function make(className, parent, properties)
 	local instance = Instance.new(className)
@@ -26,20 +18,6 @@ local function make(className, parent, properties)
 	end
 	instance.Parent = parent
 	return instance
-end
-
-local function round(instance, pixels)
-	return make("UICorner", instance, {
-		CornerRadius = UDim.new(0, pixels or 6),
-	})
-end
-
-local function outline(instance, color, transparency)
-	return make("UIStroke", instance, {
-		Color = color or COLORS.Stroke,
-		Transparency = transparency or 0,
-		Thickness = 1,
-	})
 end
 
 local function animate(instance, duration, properties, style, direction)
@@ -57,30 +35,28 @@ local function animate(instance, duration, properties, style, direction)
 end
 
 local function newConnectionBag(window)
-	local bag = {
-		_connections = {},
-	}
+	local bag = { connections = {} }
 
 	function bag:Connect(signal, callback)
 		local connection = signal:Connect(callback)
-		table.insert(self._connections, connection)
+		table.insert(self.connections, connection)
 		return connection
 	end
 
 	function bag:DisconnectAll()
-		for _, connection in ipairs(self._connections) do
+		for _, connection in ipairs(self.connections) do
 			if connection.Connected then
 				connection:Disconnect()
 			end
 		end
-		table.clear(self._connections)
+		table.clear(self.connections)
 	end
 
 	table.insert(window._bags, bag)
 	return bag
 end
 
-local function invoke(window, callback, ...)
+local function invoke(callback, ...)
 	if type(callback) ~= "function" then
 		return
 	end
@@ -119,67 +95,12 @@ local function formatNumber(value)
 	return string.format("%.2f", value)
 end
 
-local function addRowListLayout(parent, padding)
-	make("UIListLayout", parent, {
-		Padding = UDim.new(0, padding or 7),
-		SortOrder = Enum.SortOrder.LayoutOrder,
-	})
-	make("UIPadding", parent, {
-		PaddingTop = UDim.new(0, 6),
-		PaddingBottom = UDim.new(0, 8),
-		PaddingLeft = UDim.new(0, 6),
-		PaddingRight = UDim.new(0, 6),
-	})
-end
-
-local function createWidgetFrame(parent, height)
-	local frame = make("Frame", parent, {
-		BackgroundColor3 = COLORS.Row,
-		BorderSizePixel = 0,
-		Size = UDim2.new(1, 0, 0, height),
-	})
-	round(frame, 6)
-	return frame
-end
-
-local function createTextLabel(parent, text, properties)
-	local defaults = {
-		BackgroundTransparency = 1,
-		Font = Enum.Font.Gotham,
-		Text = text or "",
-		TextColor3 = COLORS.Text,
-		TextSize = 13,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		TextYAlignment = Enum.TextYAlignment.Center,
-	}
-	for property, value in pairs(properties or {}) do
-		defaults[property] = value
-	end
-	return make("TextLabel", parent, defaults)
-end
-
-local function createTextButton(parent, text, properties)
-	local defaults = {
-		AutoButtonColor = false,
-		BackgroundColor3 = COLORS.Row,
-		BorderSizePixel = 0,
-		Font = Enum.Font.Gotham,
-		Text = text or "",
-		TextColor3 = COLORS.Text,
-		TextSize = 13,
-	}
-	for property, value in pairs(properties or {}) do
-		defaults[property] = value
-	end
-	return make("TextButton", parent, defaults)
-end
-
 local function addMethod(owner, implementation)
-	return function(first, second, third, fourth, fifth, sixth)
+	return function(first, second, third, fourth, fifth)
 		if first == owner then
-			return implementation(second, third, fourth, fifth, sixth)
+			return implementation(second, third, fourth, fifth)
 		end
-		return implementation(first, second, third, fourth, fifth, sixth)
+		return implementation(first, second, third, fourth, fifth)
 	end
 end
 
@@ -195,246 +116,328 @@ local function attachHandleMethods(control, setter, getter)
 	return control
 end
 
+local function findTemplateGui(playerGui)
+	local screenGui = playerGui:FindFirstChild("cryptic")
+	if screenGui and screenGui:GetAttribute("VexiumLibraryWindow") then
+		screenGui = nil
+	end
+
+	if not screenGui then
+		local template = StarterGui:FindFirstChild("cryptic")
+		assert(template and template:IsA("ScreenGui"), "Vexium UI requires StarterGui.cryptic as its visual template.")
+		screenGui = template:Clone()
+		screenGui.Name = "VexiumUI"
+		screenGui.Parent = playerGui
+	end
+
+	assert(screenGui:IsA("ScreenGui"), "StarterGui.cryptic must be a ScreenGui.")
+	screenGui:SetAttribute("VexiumLibraryWindow", true)
+	screenGui.ResetOnSpawn = false
+	screenGui.Enabled = true
+	return screenGui
+end
+
+local function createActivationButton(parent, name, position, size, anchorPoint, zIndex)
+	return make("TextButton", parent, {
+		Name = name,
+		Active = true,
+		AutoButtonColor = false,
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		Position = position,
+		AnchorPoint = anchorPoint or Vector2.zero,
+		Selectable = true,
+		Size = size,
+		Text = "",
+		TextTransparency = 1,
+		ZIndex = zIndex or 10,
+	})
+end
+
 local function makeWindow(title, topBarColor, toggleKey)
 	local player = Players.LocalPlayer
 	assert(player, "Vexium UI must be created from a client LocalScript.")
 
 	local playerGui = player:WaitForChild("PlayerGui")
-	local screenGui = make("ScreenGui", playerGui, {
-		Name = "VexiumUI",
-		DisplayOrder = 20,
-		IgnoreGuiInset = false,
-		ResetOnSpawn = false,
-		ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
-	})
+	local screenGui = findTemplateGui(playerGui)
+	local main = screenGui:FindFirstChild("main")
+	assert(main and main:IsA("Frame"), "StarterGui.cryptic.main is missing or is not a Frame.")
+
+	local topBar = main:FindFirstChild("TopBar")
+	local tabButtonContainer = main:FindFirstChild("TabButtonContainer")
+	local tabHolder = main:FindFirstChild("TabHolder")
+	assert(topBar and tabButtonContainer and tabHolder, "The cryptic template must contain TopBar, TabButtonContainer, and TabHolder.")
+
+	local tabButtons = tabButtonContainer:FindFirstChild("Holder")
+	local firstPage = tabHolder:FindFirstChild("Home")
+	assert(tabButtons and firstPage, "The cryptic template must contain TabButtonContainer.Holder and TabHolder.Home.")
+
+	local templateNames = {
+		"Button",
+		"Toggle",
+		"Label",
+		"Divider",
+		"Input",
+		"Slider",
+		"Dropdown_Closed",
+		"Dropdown_Opened",
+		"Keybind",
+	}
+	local templates = {}
+	for _, templateName in ipairs(templateNames) do
+		local template = firstPage:FindFirstChild(templateName)
+		assert(template, "StarterGui.cryptic.main.TabHolder.Home." .. templateName .. " is missing.")
+		templates[templateName] = template:Clone()
+	end
+
+	local navButtonTemplate = tabButtons:FindFirstChildWhichIsA("TextButton")
+	assert(navButtonTemplate, "StarterGui.cryptic.main.TabButtonContainer.Holder needs a TextButton template.")
+	navButtonTemplate = navButtonTemplate:Clone()
+
+	local openedDropdownOptions = templates.Dropdown_Opened:FindFirstChild("Options")
+	local optionTemplate
+	if openedDropdownOptions then
+		for _, child in ipairs(openedDropdownOptions:GetChildren()) do
+			if child:IsA("Frame") then
+				optionTemplate = child:Clone()
+				break
+			end
+		end
+	end
+	assert(optionTemplate, "StarterGui.cryptic Dropdown_Opened.Options needs an option Frame template.")
+
+	local notificationSource = screenGui:FindFirstChild("notification")
+	local toastSource = screenGui:FindFirstChild("toast")
+	assert(notificationSource and toastSource, "StarterGui.cryptic must include notification and toast templates.")
+	local notificationTemplate = notificationSource:Clone()
+	local toastTemplate = toastSource:Clone()
+	notificationSource.Visible = false
+	toastSource.Visible = false
+
+	local function clearPageSamples(page)
+		local keep = {
+			UIListLayout = true,
+			UIPadding = true,
+			_Title = true,
+			_Border = true,
+			_Space = true,
+		}
+		for _, child in ipairs(page:GetChildren()) do
+			if not keep[child.Name] then
+				child:Destroy()
+			end
+		end
+		page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+		page.CanvasSize = UDim2.new(0, 0, 0, 0)
+		page.ScrollingDirection = Enum.ScrollingDirection.Y
+		page.CanvasPosition = Vector2.zero
+	end
+
+	clearPageSamples(firstPage)
+	local pageTemplate = firstPage:Clone()
+	pageTemplate.Name = "PageTemplate"
+	pageTemplate.Visible = false
+	pageTemplate.Parent = nil
+
+	for _, child in ipairs(tabButtons:GetChildren()) do
+		if child:IsA("TextButton") then
+			child:Destroy()
+		end
+	end
+	tabButtons.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	tabButtons.CanvasSize = UDim2.new(0, 0, 0, 0)
+	tabButtons.ScrollingDirection = Enum.ScrollingDirection.Y
+
+	local titleLabel = topBar:FindFirstChild("Title")
+	if titleLabel and titleLabel:IsA("TextLabel") then
+		titleLabel.Text = tostring(title or "Vexium")
+	end
+	local accent = typeof(topBarColor) == "Color3" and topBarColor or DEFAULT_TOP_BAR_COLOR
+	topBar.BackgroundColor3 = accent
+	local extension = topBar:FindFirstChild("TopBar_Extension")
+	if extension and extension:IsA("GuiObject") then
+		extension.BackgroundColor3 = accent
+	end
+
+	local originalMainSize = main.Size
+	local originalClipsDescendants = main.ClipsDescendants
+	local baseWidth = math.max(1, main.AbsoluteSize.X)
+	local baseHeight = math.max(1, main.AbsoluteSize.Y)
+	local uiScale = main:FindFirstChildOfClass("UIScale")
+	if not uiScale then
+		uiScale = make("UIScale", main, { Scale = 1 })
+	end
 
 	local window = {
 		_gui = screenGui,
+		_main = main,
 		_bags = {},
 		_keybinds = {},
 		_destroyed = false,
 		_minimized = false,
 		_visible = true,
 		_activeKeybind = nil,
-		_notificationOrder = 0,
-		_toastOrder = 0,
 	}
 
-	local main = make("Frame", screenGui, {
-		Name = "Window",
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		BackgroundColor3 = COLORS.Panel,
-		BorderSizePixel = 0,
-		ClipsDescendants = true,
-		Position = UDim2.fromScale(0.5, 0.5),
-		Size = UDim2.fromOffset(440, 330),
-		ZIndex = 1,
-	})
-	window._main = main
-	round(main, 9)
-	outline(main, COLORS.Stroke, 0.1)
+	local navOverlay = main:FindFirstChild("TabButtonContainer")
+	local pagesOverlay = main:FindFirstChild("TabHolder")
+	local minimizeIcon = topBar:FindFirstChild("Minimize")
+	local maximizeIcon = topBar:FindFirstChild("Maximize")
+	local unloadIcon = topBar:FindFirstChild("Exit_Unload")
+	assert(minimizeIcon and maximizeIcon and unloadIcon, "The cryptic TopBar must have Minimize, Maximize, and Exit_Unload icons.")
 
-	local header = make("Frame", main, {
-		Name = "TopBar",
-		BackgroundColor3 = typeof(topBarColor) == "Color3" and topBarColor or COLORS.Accent,
-		BorderSizePixel = 0,
-		Size = UDim2.new(1, 0, 0, 36),
-		ZIndex = 2,
-	})
-	round(header, 9)
-	make("Frame", header, {
-		Name = "BottomSquare",
-		BackgroundColor3 = typeof(topBarColor) == "Color3" and topBarColor or COLORS.Accent,
-		BorderSizePixel = 0,
-		Position = UDim2.new(0, 0, 1, -8),
-		Size = UDim2.new(1, 0, 0, 8),
-		ZIndex = 2,
-	})
-
-	local dragHandle = createTextButton(header, "", {
-		Name = "DragHandle",
-		BackgroundTransparency = 1,
-		Position = UDim2.new(0, 0, 0, 0),
-		Size = UDim2.new(1, -116, 1, 0),
-		Text = "",
-		ZIndex = 3,
-	})
-	dragHandle.Active = true
-
-	local titleLabel = createTextLabel(dragHandle, tostring(title or "Vexium"), {
-		Name = "Title",
-		Position = UDim2.new(0, 12, 0, 0),
-		Size = UDim2.new(1, -18, 1, 0),
-		TextColor3 = Color3.fromRGB(245, 245, 245),
-		TextSize = 15,
-		TextTruncate = Enum.TextTruncate.AtEnd,
-		ZIndex = 4,
-	})
-	titleLabel.Active = false
-
-	local function makeHeaderButton(name, text, xOffset, backgroundColor)
-		local button = createTextButton(header, text, {
-			Name = name,
-			BackgroundColor3 = backgroundColor or Color3.fromRGB(255, 255, 255),
-			BackgroundTransparency = 0.83,
-			Position = UDim2.new(1, xOffset, 0, 5),
-			Size = UDim2.fromOffset(27, 26),
-			TextColor3 = Color3.fromRGB(250, 250, 250),
-			TextSize = 16,
-			ZIndex = 5,
-		})
-		round(button, 5)
-		return button
-	end
-
-	local minimizeButton = makeHeaderButton("Minimize", "-", -94)
-	local maximizeButton = makeHeaderButton("Maximize", "+", -94)
-	local unloadButton = makeHeaderButton("Unload", "X", -34, COLORS.Danger)
+	local minimizeButton = createActivationButton(topBar, "MinimizeAction", minimizeIcon.Position, minimizeIcon.Size, minimizeIcon.AnchorPoint, math.max(10, minimizeIcon.ZIndex + 5))
+	local maximizeButton = createActivationButton(topBar, "MaximizeAction", maximizeIcon.Position, maximizeIcon.Size, maximizeIcon.AnchorPoint, math.max(10, maximizeIcon.ZIndex + 5))
+	local unloadButton = createActivationButton(topBar, "UnloadAction", unloadIcon.Position, unloadIcon.Size, unloadIcon.AnchorPoint, math.max(10, unloadIcon.ZIndex + 5))
 	maximizeButton.Visible = false
 
-	local nav = make("ScrollingFrame", main, {
-		Name = "TabButtonContainer",
-		Active = true,
-		AutomaticCanvasSize = Enum.AutomaticSize.Y,
-		BackgroundColor3 = COLORS.PanelDark,
-		BorderSizePixel = 0,
-		CanvasSize = UDim2.new(0, 0, 0, 0),
-		ScrollBarImageColor3 = COLORS.AccentBright,
-		ScrollBarThickness = 3,
-		Position = UDim2.new(0, 10, 0, 45),
-		Size = UDim2.new(0, 112, 1, -55),
-		ZIndex = 2,
-	})
-	round(nav, 6)
-	outline(nav, COLORS.Stroke, 0.3)
-	addRowListLayout(nav, 4)
-
-	local pageHolder = make("Frame", main, {
-		Name = "TabHolder",
-		BackgroundTransparency = 1,
-		Position = UDim2.new(0, 132, 0, 45),
-		Size = UDim2.new(1, -142, 1, -55),
-		ZIndex = 2,
-	})
-
-	local notificationHolder = make("Frame", screenGui, {
-		Name = "Notifications",
-		AnchorPoint = Vector2.new(1, 1),
-		BackgroundTransparency = 1,
-		ClipsDescendants = false,
-		Position = UDim2.new(1, -14, 1, -14),
-		Size = UDim2.new(0, 300, 0, 320),
-		ZIndex = 30,
-	})
-	make("UIListLayout", notificationHolder, {
-		Padding = UDim.new(0, 8),
-		SortOrder = Enum.SortOrder.LayoutOrder,
-		HorizontalAlignment = Enum.HorizontalAlignment.Right,
-		VerticalAlignment = Enum.VerticalAlignment.Bottom,
-	})
-
-	local toastHolder = make("Frame", screenGui, {
-		Name = "Toasts",
-		AnchorPoint = Vector2.new(0.5, 0),
-		BackgroundTransparency = 1,
-		ClipsDescendants = false,
-		Position = UDim2.new(0.5, 0, 0, 14),
-		Size = UDim2.new(0, 340, 0, 200),
-		ZIndex = 35,
-	})
-	make("UIListLayout", toastHolder, {
-		Padding = UDim.new(0, 7),
-		SortOrder = Enum.SortOrder.LayoutOrder,
-		HorizontalAlignment = Enum.HorizontalAlignment.Center,
-	})
-
-	local keyToggle = normalizeKeyCode(toggleKey) or Enum.KeyCode.RightShift
-	window.toggleKey = keyToggle
-
-	local currentSizeTween
-	local currentDragTween
-	local function resizeForViewport()
-		local camera = Workspace.CurrentCamera
-		local viewport = camera and camera.ViewportSize or Vector2.new(800, 600)
-		local viewportWidth = math.max(200, viewport.X)
-		local viewportHeight = math.max(180, viewport.Y)
-		local width = math.floor(math.min(560, viewportWidth - 24, viewportWidth * 0.88))
-		local height = math.floor(math.min(420, viewportHeight - 40, viewportHeight * 0.76))
-		width = math.max(190, width)
-		height = math.max(160, height)
-		if currentSizeTween then
-			currentSizeTween:Cancel()
-			currentSizeTween = nil
-		end
-
-		window._fullSize = UDim2.fromOffset(width, height)
-		if window._minimized then
-			main.Size = UDim2.fromOffset(width, 36)
-		else
-			main.Size = window._fullSize
-		end
-
-		local sidebarWidth = math.clamp(math.floor(width * 0.29), 78, 132)
-		nav.Size = UDim2.new(0, sidebarWidth, 1, -55)
-		pageHolder.Position = UDim2.new(0, sidebarWidth + 20, 0, 45)
-		pageHolder.Size = UDim2.new(1, -sidebarWidth - 30, 1, -55)
-		notificationHolder.Size = UDim2.new(0, math.min(300, math.max(190, viewportWidth - 28)), 0, math.min(320, math.max(150, viewportHeight * 0.5)))
-		toastHolder.Size = UDim2.new(0, math.min(340, math.max(190, viewportWidth - 28)), 0, math.min(200, math.max(100, viewportHeight * 0.3)))
-
-		local maxOffsetX = math.max(0, viewportWidth / 2 - width / 2 - 12)
-		local maxOffsetY = math.max(0, viewportHeight / 2 - height / 2 - 12)
-		main.Position = UDim2.new(
-			0.5,
-			math.clamp(main.Position.X.Offset, -maxOffsetX, maxOffsetX),
-			0.5,
-			math.clamp(main.Position.Y.Offset, -maxOffsetY, maxOffsetY)
-		)
-	end
+	local dragHandle = createActivationButton(
+		topBar,
+		"DragHandle",
+		UDim2.new(0, 0, 0, 0),
+		UDim2.new(0.82, 0, 1, 0),
+		Vector2.zero,
+		math.max(8, topBar.ZIndex + 5)
+	)
 
 	local windowBag = newConnectionBag(window)
-	local cameraViewportConnection
+	local currentCameraConnection
+	local currentSizeTween
+	local currentDragTween
+	local function clampWindowPosition()
+		local camera = Workspace.CurrentCamera
+		local viewport = camera and camera.ViewportSize or Vector2.new(1280, 720)
+		local absSize = main.AbsoluteSize
+		local currentPosition = main.AbsolutePosition
+		local left = math.clamp(currentPosition.X, 8, math.max(8, viewport.X - absSize.X - 8))
+		local top = math.clamp(currentPosition.Y, 8, math.max(8, viewport.Y - absSize.Y - 8))
+		local xOffset = left - (main.Position.X.Scale * viewport.X - main.AnchorPoint.X * absSize.X)
+		local yOffset = top - (main.Position.Y.Scale * viewport.Y - main.AnchorPoint.Y * absSize.Y)
+		main.Position = UDim2.new(main.Position.X.Scale, xOffset, main.Position.Y.Scale, yOffset)
+	end
+
+	local function resizeForViewport()
+		local camera = Workspace.CurrentCamera
+		local viewport = camera and camera.ViewportSize or Vector2.new(1280, 720)
+		local widthScale = (viewport.X - 24) / baseWidth
+		local heightScale = (viewport.Y - 48) / baseHeight
+		uiScale.Scale = math.max(0.4, math.min(1, widthScale, heightScale))
+		task.defer(clampWindowPosition)
+	end
+
 	local function bindCamera()
-		if cameraViewportConnection and cameraViewportConnection.Connected then
-			cameraViewportConnection:Disconnect()
+		if currentCameraConnection and currentCameraConnection.Connected then
+			currentCameraConnection:Disconnect()
 		end
 		local camera = Workspace.CurrentCamera
 		if camera then
-			cameraViewportConnection = windowBag:Connect(camera:GetPropertyChangedSignal("ViewportSize"), resizeForViewport)
+			currentCameraConnection = windowBag:Connect(camera:GetPropertyChangedSignal("ViewportSize"), resizeForViewport)
 		end
 		resizeForViewport()
 	end
 	windowBag:Connect(Workspace:GetPropertyChangedSignal("CurrentCamera"), bindCamera)
 	bindCamera()
 
+	local dragging = false
+	local dragInput
+	local dragStart
+	local dragStartPosition
+	windowBag:Connect(dragHandle.InputBegan, function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragInput = input
+			dragStart = input.Position
+			dragStartPosition = main.Position
+		end
+	end)
+	windowBag:Connect(dragHandle.InputChanged, function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+			if dragInput then
+				dragInput = input
+			end
+		end
+	end)
+	windowBag:Connect(UserInputService.InputChanged, function(input)
+		if not dragging or not dragStart or not dragStartPosition then
+			return
+		end
+		local mouseDrag = dragInput and dragInput.UserInputType == Enum.UserInputType.MouseMovement and input.UserInputType == Enum.UserInputType.MouseMovement
+		local touchDrag = dragInput and dragInput.UserInputType == Enum.UserInputType.Touch and dragInput == input
+		if not mouseDrag and not touchDrag then
+			return
+		end
+
+		local camera = Workspace.CurrentCamera
+		local viewport = camera and camera.ViewportSize or Vector2.new(1280, 720)
+		local delta = input.Position - dragStart
+		local absSize = main.AbsoluteSize
+		local startLeft = dragStartPosition.X.Scale * viewport.X + dragStartPosition.X.Offset - main.AnchorPoint.X * absSize.X
+		local startTop = dragStartPosition.Y.Scale * viewport.Y + dragStartPosition.Y.Offset - main.AnchorPoint.Y * absSize.Y
+		local targetLeft = math.clamp(startLeft + delta.X, 8, math.max(8, viewport.X - absSize.X - 8))
+		local targetTop = math.clamp(startTop + delta.Y, 8, math.max(8, viewport.Y - absSize.Y - 8))
+		local targetPosition = UDim2.new(
+			dragStartPosition.X.Scale,
+			targetLeft + main.AnchorPoint.X * absSize.X - dragStartPosition.X.Scale * viewport.X,
+			dragStartPosition.Y.Scale,
+			targetTop + main.AnchorPoint.Y * absSize.Y - dragStartPosition.Y.Scale * viewport.Y
+		)
+		if currentDragTween then
+			currentDragTween:Cancel()
+		end
+		currentDragTween = TweenService:Create(main, TweenInfo.new(0.06, Enum.EasingStyle.Linear), { Position = targetPosition })
+		currentDragTween:Play()
+	end)
+	windowBag:Connect(UserInputService.InputEnded, function(input)
+		if dragInput and (input == dragInput or input.UserInputType == Enum.UserInputType.MouseButton1) then
+			dragging = false
+			dragInput = nil
+		end
+	end)
+
 	local function setMinimized(minimized)
 		if window._destroyed or window._minimized == minimized then
 			return
 		end
-
 		window._minimized = minimized
+		minimizeIcon.Visible = not minimized
 		minimizeButton.Visible = not minimized
+		maximizeIcon.Visible = minimized
 		maximizeButton.Visible = minimized
-		if not minimized then
-			nav.Visible = true
-			pageHolder.Visible = true
-		end
 
 		if currentSizeTween then
 			currentSizeTween:Cancel()
 		end
-		local target = minimized and UDim2.fromOffset(window._fullSize.X.Offset, 36) or window._fullSize
-		currentSizeTween = TweenService:Create(
-			main,
-			TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
-			{ Size = target }
-		)
-		currentSizeTween:Play()
-
+		local currentSize = main.Size
+		local currentPosition = main.Position
+		local targetSize
 		if minimized then
-			task.delay(0.22, function()
-				if window._minimized and not window._destroyed then
-					nav.Visible = false
-					pageHolder.Visible = false
+			main.ClipsDescendants = true
+			navOverlay.Visible = false
+			pagesOverlay.Visible = false
+			local topBarHeight = topBar.Size.Y.Offset
+			targetSize = UDim2.new(originalMainSize.X.Scale, originalMainSize.X.Offset, originalMainSize.Y.Scale, topBarHeight)
+		else
+			navOverlay.Visible = true
+			pagesOverlay.Visible = true
+			targetSize = originalMainSize
+		end
+		local heightDelta = (targetSize.Y.Offset - currentSize.Y.Offset) * uiScale.Scale
+		local targetPosition = UDim2.new(
+			currentPosition.X.Scale,
+			currentPosition.X.Offset,
+			currentPosition.Y.Scale,
+			currentPosition.Y.Offset + main.AnchorPoint.Y * heightDelta
+		)
+
+		currentSizeTween = TweenService:Create(main, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+			Position = targetPosition,
+			Size = targetSize,
+		})
+		currentSizeTween:Play()
+		if not minimized then
+			task.delay(0.23, function()
+				if not window._minimized and not window._destroyed then
+					main.ClipsDescendants = originalClipsDescendants
 				end
 			end)
 		end
@@ -449,212 +452,98 @@ local function makeWindow(title, topBarColor, toggleKey)
 	window.toggle = function()
 		if not window._destroyed then
 			window._visible = not window._visible
-			main.Visible = window._visible
+			screenGui.Enabled = window._visible
 		end
 	end
 	window.setVisible = function(visible)
 		window._visible = not not visible
-		main.Visible = window._visible
+		screenGui.Enabled = window._visible
 	end
-
-	local dragging = false
-	local activeDragInput
-	local dragStart
-	local startPosition
-	local dragBag = newConnectionBag(window)
-	dragBag:Connect(dragHandle.InputBegan, function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			dragging = true
-			activeDragInput = input
-			dragStart = input.Position
-			startPosition = main.Position
-		end
-	end)
-	dragBag:Connect(dragHandle.InputChanged, function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-			if activeDragInput then
-				activeDragInput = input
-			end
-		end
-	end)
-	dragBag:Connect(UserInputService.InputChanged, function(input)
-		if not dragging or not dragStart or not startPosition then
-			return
-		end
-		local isMouseDrag = activeDragInput and activeDragInput.UserInputType == Enum.UserInputType.MouseMovement and input.UserInputType == Enum.UserInputType.MouseMovement
-		local isTouchDrag = activeDragInput and activeDragInput.UserInputType == Enum.UserInputType.Touch and input == activeDragInput
-		if not isMouseDrag and not isTouchDrag then
-			return
-		end
-
-		local delta = input.Position - dragStart
-		local camera = Workspace.CurrentCamera
-		local viewport = camera and camera.ViewportSize or Vector2.new(800, 600)
-		local absoluteSize = main.AbsoluteSize
-		local maxOffsetX = math.max(0, viewport.X / 2 - absoluteSize.X / 2 - 12)
-		local maxOffsetY = math.max(0, viewport.Y / 2 - absoluteSize.Y / 2 - 12)
-		local targetPosition = UDim2.new(
-			startPosition.X.Scale,
-			math.clamp(startPosition.X.Offset + delta.X, -maxOffsetX, maxOffsetX),
-			startPosition.Y.Scale,
-			math.clamp(startPosition.Y.Offset + delta.Y, -maxOffsetY, maxOffsetY)
-		)
-		if currentDragTween then
-			currentDragTween:Cancel()
-		end
-		currentDragTween = TweenService:Create(main, TweenInfo.new(0.06, Enum.EasingStyle.Linear), { Position = targetPosition })
-		currentDragTween:Play()
-	end)
-	dragBag:Connect(UserInputService.InputEnded, function(input)
-		if activeDragInput and (input == activeDragInput or input.UserInputType == Enum.UserInputType.MouseButton1) then
-			dragging = false
-			activeDragInput = nil
-		end
-	end)
-
-	local function setKeybindListening(control, isListening)
-		if isListening then
-			if window._activeKeybind and window._activeKeybind ~= control then
-				window._activeKeybind._setListening(false)
-			end
-			window._activeKeybind = control
-			control._setListening(true)
-		elseif window._activeKeybind == control then
-			window._activeKeybind = nil
-			control._setListening(false)
+	window.toggleKey = normalizeKeyCode(toggleKey) or Enum.KeyCode.RightShift
+	window.setToggleKey = function(value)
+		local keyCode = normalizeKeyCode(value)
+		if keyCode then
+			window.toggleKey = keyCode
 		end
 	end
 
-	windowBag:Connect(UserInputService.InputBegan, function(input, gameProcessed)
-		if input.UserInputType ~= Enum.UserInputType.Keyboard then
-			return
-		end
+	local tabs = {}
+	local activeTab
+	local activeNotifications = {}
+	local activeToasts = {}
 
-		local keyCode = input.KeyCode
-		if window._activeKeybind then
-			local listeningControl = window._activeKeybind
-			if keyCode == Enum.KeyCode.Escape then
-				setKeybindListening(listeningControl, false)
-			else
-				listeningControl.set(keyCode)
-				setKeybindListening(listeningControl, false)
-			end
-			return
-		end
-
-		if gameProcessed or UserInputService:GetFocusedTextBox() then
-			return
-		end
-		if keyCode == window.toggleKey then
-			window.toggle()
-			return
-		end
-		for _, keybind in ipairs(window._keybinds) do
-			if keybind.keyCode == keyCode then
-				invoke(window, keybind.callback, keyCode)
+	local function renumberStack(items, template, isToast)
+		local basePosition = template.Position
+		local verticalSpacing = isToast and (template.Size.Y.Offset + 7) or (template.Size.Y.Offset + 8)
+		for index, card in ipairs(items) do
+			if card.Parent then
+				card.Position = UDim2.new(basePosition.X.Scale, basePosition.X.Offset, basePosition.Y.Scale, basePosition.Y.Offset + (isToast and 1 or -1) * (index - 1) * verticalSpacing)
 			end
 		end
-	end)
+	end
 
-	local function makeNotification(titleText, messageText, duration, isToast)
+	local function removeFromStack(items, card, template, isToast)
+		for index, existing in ipairs(items) do
+			if existing == card then
+				table.remove(items, index)
+				break
+			end
+		end
+		renumberStack(items, template, isToast)
+	end
+
+	local function fadeAndDestroy(card, items, template, isToast)
+		if not card.Parent then
+			return
+		end
+		for _, descendant in ipairs(card:GetDescendants()) do
+			if descendant:IsA("TextLabel") then
+				animate(descendant, 0.16, { TextTransparency = 1 })
+			elseif descendant:IsA("Frame") then
+				animate(descendant, 0.16, { BackgroundTransparency = 1 })
+			elseif descendant:IsA("UIStroke") then
+				animate(descendant, 0.16, { Transparency = 1 })
+			end
+		end
+		animate(card, 0.16, { BackgroundTransparency = 1 })
+		task.delay(0.18, function()
+			removeFromStack(items, card, template, isToast)
+			if card.Parent then
+				card:Destroy()
+			end
+		end)
+	end
+
+	local function makeNotification(notificationTitle, message, duration, isToast)
 		if window._destroyed then
 			return nil
 		end
-
-		local holder = isToast and toastHolder or notificationHolder
-		local card = make("Frame", holder, {
-			BackgroundColor3 = COLORS.PanelDark,
-			BorderSizePixel = 0,
-			LayoutOrder = isToast and window._toastOrder or window._notificationOrder,
-			Size = UDim2.new(1, 0, 0, 0),
-			AutomaticSize = Enum.AutomaticSize.Y,
-			ZIndex = isToast and 36 or 31,
-		})
-		round(card, 8)
-		outline(card, COLORS.Stroke, 0.12)
-		make("UIPadding", card, {
-			PaddingTop = UDim.new(0, isToast and 7 or 9),
-			PaddingBottom = UDim.new(0, isToast and 7 or 9),
-			PaddingLeft = UDim.new(0, 12),
-			PaddingRight = UDim.new(0, 12),
-		})
-		make("UIListLayout", card, {
-			Padding = UDim.new(0, 2),
-			SortOrder = Enum.SortOrder.LayoutOrder,
-		})
-
+		local template = isToast and toastTemplate or notificationTemplate
+		local card = template:Clone()
+		card.Visible = true
+		card.Parent = screenGui
+		local items = isToast and activeToasts or activeNotifications
+		local titleObject = card:FindFirstChild("title")
+		local textObject = card:FindFirstChild("text")
 		if isToast then
-			local toastLabel = createTextLabel(card, tostring(messageText or ""), {
-				Name = "Message",
-				AutomaticSize = Enum.AutomaticSize.Y,
-				LayoutOrder = 1,
-				Size = UDim2.new(1, 0, 0, 0),
-				TextWrapped = true,
-				TextXAlignment = Enum.TextXAlignment.Center,
-				TextSize = 14,
-				ZIndex = 37,
-			})
-			toastLabel.Active = false
+			if textObject then
+				textObject.Text = tostring(message or "")
+			end
 		else
-			local notificationTitle = createTextLabel(card, tostring(titleText or "Notification"), {
-				Name = "Title",
-				LayoutOrder = 1,
-				Size = UDim2.new(1, 0, 0, 20),
-				TextSize = 13,
-				Font = Enum.Font.GothamSemibold,
-				ZIndex = 32,
-			})
-			notificationTitle.Active = false
-			local messageLabel = createTextLabel(card, tostring(messageText or ""), {
-				Name = "Message",
-				AutomaticSize = Enum.AutomaticSize.Y,
-				LayoutOrder = 2,
-				Size = UDim2.new(1, 0, 0, 0),
-				TextColor3 = COLORS.MutedText,
-				TextSize = 12,
-				TextWrapped = true,
-				ZIndex = 32,
-			})
-			messageLabel.Active = false
+			if titleObject then
+				titleObject.Text = tostring(notificationTitle or "Notification")
+			end
+			if textObject then
+				textObject.Text = tostring(message or "")
+			end
 		end
 
-		local bar = make("Frame", card, {
-			BackgroundColor3 = COLORS.AccentBright,
-			BorderSizePixel = 0,
-			LayoutOrder = 3,
-			Size = UDim2.new(1, 0, 0, 3),
-			ZIndex = isToast and 37 or 32,
-		})
-		round(bar, 2)
+		table.insert(items, card)
+		renumberStack(items, template, isToast)
 		local lifetime = math.max(0, tonumber(duration) or 3)
-		animate(bar, math.max(0.05, lifetime), { Size = UDim2.new(0, 0, 0, 3) }, Enum.EasingStyle.Linear)
-		animate(card, 0.18, { BackgroundTransparency = 0 }, Enum.EasingStyle.Quad)
-
-		if isToast then
-			window._toastOrder += 1
-		else
-			window._notificationOrder += 1
-		end
-
 		task.delay(lifetime, function()
-			if not card.Parent then
-				return
-			end
-			for _, descendant in ipairs(card:GetDescendants()) do
-				if descendant:IsA("TextLabel") then
-					animate(descendant, 0.16, { TextTransparency = 1 })
-				elseif descendant:IsA("Frame") then
-					animate(descendant, 0.16, { BackgroundTransparency = 1 })
-				end
-			end
-			animate(card, 0.16, { BackgroundTransparency = 1 })
-			task.delay(0.18, function()
-				if card.Parent then
-					card:Destroy()
-				end
-			end)
+			fadeAndDestroy(card, items, template, isToast)
 		end)
-
 		return card
 	end
 
@@ -665,65 +554,108 @@ local function makeWindow(title, topBarColor, toggleKey)
 		return makeNotification(nil, message, duration, true)
 	end)
 
-	local tabs = {}
-	local activeTab
+	local function bindKeybind(control, keyCode)
+		control.keyCode = keyCode
+		control.inputBox.Text = control._listening and "Press key..." or (keyCode and keyCode.Name or "Key")
+	end
+
+	local function stopListening(control)
+		if window._activeKeybind == control then
+			window._activeKeybind = nil
+		end
+		control._listening = false
+		control.inputBox.Text = control.keyCode and control.keyCode.Name or "Key"
+	end
+
+	local function startListening(control)
+		if window._activeKeybind and window._activeKeybind ~= control then
+			stopListening(window._activeKeybind)
+		end
+		window._activeKeybind = control
+		control._listening = true
+		control.inputBox.Text = "Press key..."
+	end
+
+	windowBag:Connect(UserInputService.InputBegan, function(input, gameProcessed)
+		if input.UserInputType ~= Enum.UserInputType.Keyboard then
+			return
+		end
+		local keyCode = input.KeyCode
+		if window._activeKeybind then
+			local control = window._activeKeybind
+			if keyCode == Enum.KeyCode.Escape then
+				control.inputBox:ReleaseFocus()
+				stopListening(control)
+			elseif keyCode ~= Enum.KeyCode.Unknown then
+				bindKeybind(control, keyCode)
+				control.inputBox:ReleaseFocus()
+				stopListening(control)
+			end
+			return
+		end
+		if gameProcessed or UserInputService:GetFocusedTextBox() then
+			return
+		end
+		if keyCode == window.toggleKey then
+			window.toggle()
+			return
+		end
+		for _, keybind in ipairs(window._keybinds) do
+			if keybind.keyCode == keyCode then
+				invoke(keybind.callback, keyCode)
+			end
+		end
+	end)
+
+	windowBag:Connect(minimizeButton.Activated, function()
+		setMinimized(true)
+	end)
+	windowBag:Connect(maximizeButton.Activated, function()
+		setMinimized(false)
+	end)
+	windowBag:Connect(unloadButton.Activated, function()
+		window.destroy()
+	end)
+
 	window.createTab = addMethod(window, function(tabName)
 		local name = tostring(tabName or ("Tab " .. tostring(#tabs + 1)))
+		local page
+		if #tabs == 0 then
+			page = firstPage
+			page.Name = "Tab_1"
+		else
+			page = pageTemplate:Clone()
+			page.Name = "Tab_" .. tostring(#tabs + 1)
+			page.Visible = false
+			page.Parent = tabHolder
+		end
+
+		local pageTitle = page:FindFirstChild("_Title")
+		if pageTitle and pageTitle:IsA("TextLabel") then
+			pageTitle.Text = name
+		end
+		page.Visible = false
+		local navButton = navButtonTemplate:Clone()
+		navButton.Name = "TabButton_" .. tostring(#tabs + 1)
+		navButton.Text = name
+		navButton.LayoutOrder = #tabs + 1
+		navButton.Visible = true
+		navButton.Parent = tabButtons
+
 		local tab = {
 			name = name,
+			_page = page,
+			_button = navButton,
 			_controls = {},
+			_nextLayoutOrder = 3,
 		}
-		local navButton = createTextButton(nav, name, {
-			Name = "TabButton",
-			BackgroundColor3 = COLORS.PanelDark,
-			LayoutOrder = #tabs + 1,
-			Size = UDim2.new(1, 0, 0, 29),
-			TextColor3 = COLORS.MutedText,
-			TextSize = 12,
-			TextTruncate = Enum.TextTruncate.AtEnd,
-			ZIndex = 3,
-		})
-		round(navButton, 5)
-		local indicator = make("Frame", navButton, {
-			BackgroundColor3 = COLORS.AccentBright,
-			BorderSizePixel = 0,
-			Position = UDim2.new(0, 0, 0.2, 0),
-			Size = UDim2.new(0, 3, 0.6, 0),
-			Visible = false,
-			ZIndex = 4,
-		})
-		round(indicator, 2)
-
-		local page = make("ScrollingFrame", pageHolder, {
-			Name = "Tab_" .. tostring(#tabs + 1),
-			Active = true,
-			AutomaticCanvasSize = Enum.AutomaticSize.Y,
-			BackgroundTransparency = 1,
-			BorderSizePixel = 0,
-			CanvasSize = UDim2.new(0, 0, 0, 0),
-			ScrollBarImageColor3 = COLORS.AccentBright,
-			ScrollBarThickness = 3,
-			Size = UDim2.fromScale(1, 1),
-			Visible = false,
-			ZIndex = 2,
-		})
-		addRowListLayout(page, 7)
-		tab._page = page
-		tab._button = navButton
-		tab._indicator = indicator
 
 		local function selectTab()
-			if activeTab then
-				activeTab._page.Visible = false
-				activeTab._indicator.Visible = false
-				activeTab._button.TextColor3 = COLORS.MutedText
-				activeTab._button.BackgroundColor3 = COLORS.PanelDark
+			for _, existingTab in ipairs(tabs) do
+				existingTab._page.Visible = false
 			end
-			activeTab = tab
 			page.Visible = true
-			indicator.Visible = true
-			navButton.TextColor3 = COLORS.Text
-			navButton.BackgroundColor3 = COLORS.Row
+			activeTab = tab
 			window._activeTab = tab
 		end
 
@@ -734,219 +666,158 @@ local function makeWindow(title, topBarColor, toggleKey)
 		end
 		table.insert(tabs, tab)
 
+		local function cloneControl(templateName, order)
+			local control = templates[templateName]:Clone()
+			control.LayoutOrder = order or tab._nextLayoutOrder
+			control.Visible = true
+			tab._nextLayoutOrder = math.max(tab._nextLayoutOrder, control.LayoutOrder + 1)
+			control.Parent = page
+			return control
+		end
+
 		local function register(control)
 			table.insert(tab._controls, control)
 			return control
 		end
 
+		local function cloneHitbox(parent, name, position, size, anchorPoint, zIndex)
+			return createActivationButton(parent, name, position, size, anchorPoint, zIndex)
+		end
+
 		tab.createButton = addMethod(tab, function(controlName, callback)
-			local button = createTextButton(page, tostring(controlName or "Button"), {
-				Name = "Button",
-				BackgroundColor3 = COLORS.Row,
-				LayoutOrder = #tab._controls + 1,
-				Size = UDim2.new(1, 0, 0, 34),
-				TextXAlignment = Enum.TextXAlignment.Left,
-				TextSize = 13,
-				ZIndex = 3,
-			})
-			round(button, 6)
-			outline(button, COLORS.Stroke, 0.55)
-			make("UIPadding", button, { PaddingLeft = UDim.new(0, 11), PaddingRight = UDim.new(0, 10) })
+			local row = cloneControl("Button")
+			row.Name = "Button"
+			local nameLabel = row:FindFirstChild("Name")
+			if nameLabel and nameLabel:IsA("TextLabel") then
+				nameLabel.Text = tostring(controlName or "Button")
+			end
+			local hitbox = cloneHitbox(row, "Action", UDim2.new(0, 0, 0, 0), UDim2.fromScale(1, 1), Vector2.zero, row.ZIndex + 5)
 			local bag = newConnectionBag(window)
-			bag:Connect(button.MouseEnter, function()
-				animate(button, 0.12, { BackgroundColor3 = COLORS.RowHover })
+			bag:Connect(hitbox.Activated, function()
+				invoke(callback)
 			end)
-			bag:Connect(button.MouseLeave, function()
-				animate(button, 0.12, { BackgroundColor3 = COLORS.Row })
-			end)
-			bag:Connect(button.Activated, function()
-				invoke(window, callback)
-			end)
-			return register({ instance = button })
+			return register({ instance = row, button = hitbox })
 		end)
 
 		tab.createToggle = addMethod(tab, function(controlName, callback, initialValue)
-			local row = createWidgetFrame(page, 34)
+			local row = cloneControl("Toggle")
 			row.Name = "Toggle"
-			row.LayoutOrder = #tab._controls + 1
-			local label = createTextLabel(row, tostring(controlName or "Toggle"), {
-				Name = "Name",
-				Position = UDim2.new(0, 10, 0, 0),
-				Size = UDim2.new(1, -64, 1, 0),
-				TextTruncate = Enum.TextTruncate.AtEnd,
-				ZIndex = 4,
-			})
-			label.Active = false
-			local switch = createTextButton(row, "", {
-				Name = "ToggleButton",
-				AnchorPoint = Vector2.new(1, 0.5),
-				BackgroundColor3 = COLORS.SwitchOff,
-				Position = UDim2.new(1, -9, 0.5, 0),
-				Size = UDim2.fromOffset(36, 20),
-				Text = "",
-				ZIndex = 4,
-			})
-			round(switch, 10)
-			local knob = make("Frame", switch, {
-				Name = "Knob",
-				AnchorPoint = Vector2.new(0, 0.5),
-				BackgroundColor3 = Color3.fromRGB(230, 230, 230),
-				BorderSizePixel = 0,
-				Position = UDim2.new(0, 3, 0.5, 0),
-				Size = UDim2.fromOffset(14, 14),
-				ZIndex = 5,
-			})
-			round(knob, 8)
-
+			local nameLabel = row:FindFirstChild("Name")
+			local toggleBack = row:FindFirstChild("ToggleBtnBack")
+			if nameLabel and nameLabel:IsA("TextLabel") then
+				nameLabel.Text = tostring(controlName or "Toggle")
+			end
+			assert(toggleBack and toggleBack:IsA("GuiObject"), "Toggle template is missing ToggleBtnBack.")
 			local value = not not initialValue
+			local originalColor = toggleBack.BackgroundColor3
 			local function set(nextValue, notify)
 				value = not not nextValue
-				animate(switch, 0.14, { BackgroundColor3 = value and COLORS.AccentBright or COLORS.SwitchOff })
-				animate(knob, 0.14, { Position = value and UDim2.new(1, -17, 0.5, 0) or UDim2.new(0, 3, 0.5, 0) })
+				animate(toggleBack, 0.14, { BackgroundColor3 = value and accent or originalColor })
 				if notify then
-					invoke(window, callback, value)
+					invoke(callback, value)
 				end
 			end
-			set(value, false)
+			local hitbox = cloneHitbox(row, "ToggleAction", UDim2.new(0, 0, 0, 0), UDim2.fromScale(1, 1), Vector2.zero, row.ZIndex + 5)
 			local bag = newConnectionBag(window)
-			bag:Connect(switch.Activated, function()
+			bag:Connect(hitbox.Activated, function()
 				set(not value, true)
 			end)
-			return attachHandleMethods(register({ instance = row }), set, function()
+			set(value, false)
+			return attachHandleMethods(register({ instance = row, button = hitbox }), set, function()
 				return value
 			end)
 		end)
 
-		tab.createDropdown = addMethod(tab, function(controlName, options, callback, initialValue)
-			local row = make("Frame", page, {
-				Name = "Dropdown",
-				BackgroundTransparency = 1,
-				BorderSizePixel = 0,
-				ClipsDescendants = false,
-				LayoutOrder = #tab._controls + 1,
-				Size = UDim2.new(1, 0, 0, 34),
-			})
-			local headerButton = createTextButton(row, "", {
-				Name = "Header",
-				BackgroundColor3 = COLORS.Row,
-				Size = UDim2.new(1, 0, 0, 34),
-				Text = "",
-				TextXAlignment = Enum.TextXAlignment.Left,
-				ZIndex = 3,
-			})
-			round(headerButton, 6)
-			outline(headerButton, COLORS.Stroke, 0.55)
-			local optionList = type(options) == "table" and options or {}
-			local selected = initialValue
-			if selected == nil then
-				selected = "Select an option"
+		tab.createLabel = addMethod(tab, function(text)
+			local row = cloneControl("Label")
+			row.Name = "Label"
+			local nameLabel = row:FindFirstChild("Name")
+			if nameLabel and nameLabel:IsA("TextLabel") then
+				nameLabel.Text = tostring(text or "")
 			end
-			local nameLabel = createTextLabel(headerButton, tostring(controlName or "Dropdown"), {
-				Position = UDim2.new(0, 10, 0, 0),
-				Size = UDim2.new(0.5, -10, 1, 0),
-				TextTruncate = Enum.TextTruncate.AtEnd,
-				ZIndex = 4,
-			})
-			nameLabel.Active = false
-			local selectedLabel = createTextLabel(headerButton, tostring(selected), {
-				Name = "SelectedOption",
-				Position = UDim2.new(0.5, 0, 0, 0),
-				Size = UDim2.new(0.5, -31, 1, 0),
-				TextColor3 = COLORS.MutedText,
-				TextTruncate = Enum.TextTruncate.AtEnd,
-				TextXAlignment = Enum.TextXAlignment.Right,
-				ZIndex = 4,
-			})
-			selectedLabel.Active = false
-			local arrow = createTextLabel(headerButton, "v", {
-				Position = UDim2.new(1, -26, 0, 0),
-				Size = UDim2.fromOffset(20, 34),
-				TextColor3 = COLORS.MutedText,
-				TextXAlignment = Enum.TextXAlignment.Center,
-				ZIndex = 4,
-			})
-			arrow.Active = false
-
-			local optionScroll = make("ScrollingFrame", row, {
-				Name = "Options",
-				Active = true,
-				AutomaticCanvasSize = Enum.AutomaticSize.Y,
-				BackgroundColor3 = COLORS.PanelDark,
-				BorderSizePixel = 0,
-				CanvasSize = UDim2.new(0, 0, 0, 0),
-				Position = UDim2.new(0, 0, 0, 38),
-				ScrollBarImageColor3 = COLORS.AccentBright,
-				ScrollBarThickness = 3,
-				Size = UDim2.new(1, 0, 0, 0),
-				Visible = false,
-				ZIndex = 7,
-			})
-			round(optionScroll, 6)
-			outline(optionScroll, COLORS.Stroke, 0.2)
-			make("UIListLayout", optionScroll, {
-				Padding = UDim.new(0, 2),
-				SortOrder = Enum.SortOrder.LayoutOrder,
-			})
-			make("UIPadding", optionScroll, {
-				PaddingTop = UDim.new(0, 4),
-				PaddingBottom = UDim.new(0, 4),
-				PaddingLeft = UDim.new(0, 4),
-				PaddingRight = UDim.new(0, 4),
-			})
-
-			local isOpen = false
-			local function setOpen(open)
-				isOpen = not not open
-				optionScroll.Visible = isOpen
-				arrow.Text = isOpen and "^" or "v"
-				local count = math.max(1, math.min(#optionList, 5))
-				local height = isOpen and (count * 27 + 8) or 34
-				row.Size = UDim2.new(1, 0, 0, height + (isOpen and 4 or 0))
-				optionScroll.Size = UDim2.new(1, 0, 0, isOpen and (count * 27 + 8) or 0)
-			end
-			local function set(value, notify)
-				selected = value
-				selectedLabel.Text = tostring(value)
-				setOpen(false)
-				if notify then
-					invoke(window, callback, value)
+			local function set(value)
+				if nameLabel then
+					nameLabel.Text = tostring(value or "")
 				end
 			end
+			return attachHandleMethods(register({ instance = row, label = nameLabel }), set)
+		end)
 
-			for index, option in ipairs(optionList) do
-				local optionValue = option
-				local optionButton = createTextButton(optionScroll, tostring(optionValue), {
-					Name = "Option",
-					BackgroundColor3 = COLORS.PanelDark,
-					LayoutOrder = index,
-					Size = UDim2.new(1, 0, 0, 25),
-					TextXAlignment = Enum.TextXAlignment.Left,
-					TextSize = 12,
-					ZIndex = 8,
-				})
-				make("UIPadding", optionButton, { PaddingLeft = UDim.new(0, 7), PaddingRight = UDim.new(0, 6) })
-				round(optionButton, 4)
-				local optionBag = newConnectionBag(window)
-				optionBag:Connect(optionButton.Activated, function()
-					set(optionValue, true)
-				end)
+		tab.createDivider = addMethod(tab, function()
+			local row = cloneControl("Divider")
+			row.Name = "Divider"
+			return register({ instance = row })
+		end)
+
+		tab.createInput = addMethod(tab, function(controlName, callback, placeholder)
+			local row = cloneControl("Input")
+			row.Name = "Input"
+			local nameLabel = row:FindFirstChild("Name")
+			local textBox = row:FindFirstChild("InputBox")
+			if nameLabel and nameLabel:IsA("TextLabel") then
+				nameLabel.Text = tostring(controlName or "Input")
 			end
-
+			assert(textBox and textBox:IsA("TextBox"), "Input template is missing InputBox.")
+			textBox.Text = ""
+			textBox.PlaceholderText = tostring(placeholder or "")
 			local bag = newConnectionBag(window)
-			bag:Connect(headerButton.Activated, function()
-				setOpen(not isOpen)
+			bag:Connect(textBox.FocusLost, function()
+				invoke(callback, textBox.Text)
 			end)
-			local control = register({
-				instance = row,
-				open = function() setOpen(true) end,
-				close = function() setOpen(false) end,
-			})
+			local function set(value)
+				textBox.Text = tostring(value or "")
+			end
+			local control = register({ instance = row, textBox = textBox })
 			return attachHandleMethods(control, set, function()
-				return selected
+				return textBox.Text
 			end)
 		end)
 
-		local function createSlider(controlName, minimum, maximum, callback, step)
+		tab.createKeybind = addMethod(tab, function(controlName, callback, initialKey)
+			local row = cloneControl("Keybind")
+			row.Name = "Keybind"
+			local nameLabel = row:FindFirstChild("Name")
+			local textBox = row:FindFirstChild("InputBox")
+			if nameLabel and nameLabel:IsA("TextLabel") then
+				nameLabel.Text = tostring(controlName or "Keybind")
+			end
+			assert(textBox and textBox:IsA("TextBox"), "Keybind template is missing InputBox.")
+			local keyCode = normalizeKeyCode(initialKey)
+			local control = {
+				instance = row,
+				inputBox = textBox,
+				keyCode = keyCode,
+				callback = callback,
+				_listening = false,
+			}
+			textBox.ClearTextOnFocus = false
+			textBox.Text = keyCode and keyCode.Name or "Key"
+
+			local function set(value)
+				keyCode = normalizeKeyCode(value)
+				control.keyCode = keyCode
+				if not control._listening then
+					textBox.Text = keyCode and keyCode.Name or "Key"
+				end
+			end
+			local bag = newConnectionBag(window)
+			bag:Connect(textBox.Focused, function()
+				startListening(control)
+			end)
+			bag:Connect(textBox.FocusLost, function()
+				if window._activeKeybind == control then
+					window._activeKeybind = nil
+				end
+				control._listening = false
+				textBox.Text = keyCode and keyCode.Name or "Key"
+			end)
+			table.insert(window._keybinds, control)
+			return attachHandleMethods(register(control), set, function()
+				return keyCode
+			end)
+		end)
+
+		tab.createSlider = addMethod(tab, function(controlName, minimum, maximum, callback, step)
 			local minValue = tonumber(minimum) or 0
 			local maxValue = tonumber(maximum) or 100
 			assert(maxValue >= minValue, "Slider maximum must be greater than or equal to its minimum.")
@@ -954,239 +825,161 @@ local function makeWindow(title, topBarColor, toggleKey)
 			if increment <= 0 then
 				increment = 1
 			end
-			local row = createWidgetFrame(page, 45)
+			local row = cloneControl("Slider")
 			row.Name = "Slider"
-			row.LayoutOrder = #tab._controls + 1
-			local label = createTextLabel(row, tostring(controlName or "Slider"), {
-				Position = UDim2.new(0, 10, 0, 1),
-				Size = UDim2.new(0.72, 0, 0, 18),
-				TextSize = 12,
-				ZIndex = 4,
-			})
-			label.Active = false
-			local valueLabel = createTextLabel(row, "", {
-				Name = "Value",
-				Position = UDim2.new(1, -54, 0, 1),
-				Size = UDim2.new(0, 44, 0, 18),
-				TextColor3 = COLORS.MutedText,
-				TextSize = 12,
-				TextXAlignment = Enum.TextXAlignment.Right,
-				ZIndex = 4,
-			})
-			valueLabel.Active = false
-			local track = make("Frame", row, {
-				Name = "Track",
-				Active = true,
-				BackgroundColor3 = Color3.fromRGB(57, 57, 57),
-				BorderSizePixel = 0,
-				Position = UDim2.new(0, 10, 0, 27),
-				Size = UDim2.new(1, -20, 0, 5),
-				ZIndex = 4,
-			})
-			round(track, 4)
-			local fill = make("Frame", track, {
-				Name = "Fill",
-				BackgroundColor3 = COLORS.AccentBright,
-				BorderSizePixel = 0,
-				Size = UDim2.new(0, 0, 1, 0),
-				ZIndex = 5,
-			})
-			round(fill, 4)
-			local knob = make("Frame", track, {
-				Name = "Knob",
-				Active = true,
-				AnchorPoint = Vector2.new(0.5, 0.5),
-				BackgroundColor3 = Color3.fromRGB(235, 235, 235),
-				BorderSizePixel = 0,
-				Position = UDim2.new(0, 0, 0.5, 0),
-				Size = UDim2.fromOffset(13, 13),
-				ZIndex = 6,
-			})
-			round(knob, 8)
+			local nameLabel = row:FindFirstChild("Name")
+			local track = row:FindFirstChild("slider_bg")
+			local dot = track and track:FindFirstChild("slider_dot")
+			local valueLabel = row:FindFirstChild("Value_Label")
+			if nameLabel and nameLabel:IsA("TextLabel") then
+				nameLabel.Text = tostring(controlName or "Slider")
+			end
+			assert(track and dot and valueLabel, "Slider template is missing its track, dot, or value label.")
 
 			local value = minValue
 			local function updateVisuals()
 				local alpha = maxValue == minValue and 0 or (value - minValue) / (maxValue - minValue)
-				fill.Size = UDim2.new(alpha, 0, 1, 0)
-				knob.Position = UDim2.new(alpha, 0, 0.5, 0)
+				dot.Position = UDim2.new(alpha, 0, 0.5, 0)
 				valueLabel.Text = formatNumber(value)
 			end
 			local function set(nextValue, notify)
 				local number = math.clamp(tonumber(nextValue) or minValue, minValue, maxValue)
-				if maxValue > minValue then
-					if number > minValue and number < maxValue then
-						number = minValue + math.round((number - minValue) / increment) * increment
-						number = math.clamp(number, minValue, maxValue)
-					end
+				if maxValue > minValue and number > minValue and number < maxValue then
+					number = minValue + math.round((number - minValue) / increment) * increment
+					number = math.clamp(number, minValue, maxValue)
 				end
 				local changed = number ~= value
 				value = number
 				updateVisuals()
 				if notify and changed then
-					invoke(window, callback, value)
+					invoke(callback, value)
 				end
 			end
 			local function updateFromInput(input)
-				local trackWidth = track.AbsoluteSize.X
-				if trackWidth <= 0 then
+				local width = track.AbsoluteSize.X
+				if width <= 0 then
 					return
 				end
-				local alpha = math.clamp((input.Position.X - track.AbsolutePosition.X) / trackWidth, 0, 1)
+				local alpha = math.clamp((input.Position.X - track.AbsolutePosition.X) / width, 0, 1)
 				set(minValue + (maxValue - minValue) * alpha, true)
 			end
 			updateVisuals()
 
 			local activeInput
-			local sliderBag = newConnectionBag(window)
-			local function beginDrag(input)
+			local bag = newConnectionBag(window)
+			local function startDrag(input)
 				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 					activeInput = input
 					updateFromInput(input)
 				end
 			end
-			sliderBag:Connect(track.InputBegan, beginDrag)
-			sliderBag:Connect(knob.InputBegan, beginDrag)
-			sliderBag:Connect(UserInputService.InputChanged, function(input)
+			bag:Connect(track.InputBegan, startDrag)
+			bag:Connect(dot.InputBegan, startDrag)
+			bag:Connect(UserInputService.InputChanged, function(input)
 				local mouseDrag = activeInput and activeInput.UserInputType == Enum.UserInputType.MouseButton1 and input.UserInputType == Enum.UserInputType.MouseMovement
-				local touchDrag = activeInput and activeInput.UserInputType == Enum.UserInputType.Touch and activeInput == input
+				local touchDrag = activeInput and activeInput.UserInputType == Enum.UserInputType.Touch and input == activeInput
 				if mouseDrag or touchDrag then
 					updateFromInput(input)
 				end
 			end)
-			sliderBag:Connect(UserInputService.InputEnded, function(input)
+			bag:Connect(UserInputService.InputEnded, function(input)
 				if activeInput and (input == activeInput or input.UserInputType == Enum.UserInputType.MouseButton1) then
 					activeInput = nil
 				end
 			end)
+
 			return attachHandleMethods(register({ instance = row }), set, function()
 				return value
 			end)
-		end
-
-		tab.createSlider = addMethod(tab, createSlider)
+		end)
 		tab.CreateSlider = tab.createSlider
 
-		tab.createLabel = addMethod(tab, function(text)
-			local row = make("Frame", page, {
-				Name = "Label",
-				BackgroundTransparency = 1,
-				BorderSizePixel = 0,
-				LayoutOrder = #tab._controls + 1,
-				Size = UDim2.new(1, 0, 0, 25),
-			})
-			local label = createTextLabel(row, tostring(text or ""), {
-				Name = "Text",
-				Position = UDim2.new(0, 4, 0, 0),
-				Size = UDim2.new(1, -8, 1, 0),
-				TextColor3 = COLORS.MutedText,
-				TextSize = 12,
-				ZIndex = 3,
-			})
-			label.Active = false
-			local function set(value)
-				label.Text = tostring(value or "")
-			end
-			return attachHandleMethods(register({ instance = row, label = label }), set)
-		end)
+		tab.createDropdown = addMethod(tab, function(controlName, options, callback, initialValue)
+			local optionList = type(options) == "table" and options or {}
+			local order = tab._nextLayoutOrder
+			local closed = cloneControl("Dropdown_Closed", order)
+			local opened = cloneControl("Dropdown_Opened", order)
+			closed.Name = "Dropdown_Closed"
+			opened.Name = "Dropdown_Opened"
+			opened.Visible = false
+			local closedName = closed:FindFirstChild("Name")
+			local closedPick = closed:FindFirstChild("Pick")
+			local openName = opened:FindFirstChild("Name")
+			local openPick = opened:FindFirstChild("Pick")
+			local optionScroll = opened:FindFirstChild("Options")
+			if closedName then closedName.Text = tostring(controlName or "Dropdown") end
+			if openName then openName.Text = tostring(controlName or "Dropdown") end
+			assert(closedPick and openPick and optionScroll, "Dropdown template is missing Name, Pick, or Options.")
+			optionScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+			optionScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 
-		tab.createInput = addMethod(tab, function(controlName, callback, placeholder)
-			local row = createWidgetFrame(page, 36)
-			row.Name = "Input"
-			row.LayoutOrder = #tab._controls + 1
-			local label = createTextLabel(row, tostring(controlName or "Input"), {
-				Position = UDim2.new(0, 10, 0, 0),
-				Size = UDim2.new(0.47, -10, 1, 0),
-				TextTruncate = Enum.TextTruncate.AtEnd,
-				ZIndex = 4,
-			})
-			label.Active = false
-			local textBox = make("TextBox", row, {
-				Name = "InputBox",
-				BackgroundColor3 = Color3.fromRGB(55, 55, 55),
-				BorderSizePixel = 0,
-				ClearTextOnFocus = false,
-				Font = Enum.Font.Gotham,
-				PlaceholderColor3 = COLORS.MutedText,
-				PlaceholderText = tostring(placeholder or "Enter text"),
-				Position = UDim2.new(0.47, 0, 0.18, 0),
-				Size = UDim2.new(0.53, -9, 0.64, 0),
-				Text = "",
-				TextColor3 = COLORS.Text,
-				TextSize = 12,
-				ZIndex = 4,
-			})
-			round(textBox, 12)
-			make("UIPadding", textBox, { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8) })
-			local bag = newConnectionBag(window)
-			bag:Connect(textBox.FocusLost, function()
-				invoke(window, callback, textBox.Text)
-			end)
-			local function set(value)
-				textBox.Text = tostring(value or "")
+			local selected = initialValue
+			if selected == nil then
+				selected = "Dropdown"
 			end
-			local control = register({
-				instance = row,
-				textBox = textBox,
-			})
+			closedPick.Text = tostring(selected)
+			openPick.Text = tostring(selected)
+
+			for _, child in ipairs(optionScroll:GetChildren()) do
+				if child:IsA("Frame") then
+					child:Destroy()
+				end
+			end
+			local extraHeight = math.max(0, #optionList - 2) * 30
+			if extraHeight > 0 then
+				opened.Size = UDim2.new(opened.Size.X.Scale, opened.Size.X.Offset, opened.Size.Y.Scale, opened.Size.Y.Offset + extraHeight)
+				optionScroll.Size = UDim2.new(optionScroll.Size.X.Scale, optionScroll.Size.X.Offset, optionScroll.Size.Y.Scale, optionScroll.Size.Y.Offset + extraHeight)
+			end
+
+			local value = selected
+			local function setOpen(isOpen)
+				closed.Visible = not isOpen
+				opened.Visible = isOpen
+			end
+			local function set(nextValue, notify)
+				value = nextValue
+				closedPick.Text = tostring(nextValue)
+				openPick.Text = tostring(nextValue)
+				setOpen(false)
+				if notify then
+					invoke(callback, nextValue)
+				end
+			end
+
+			for index, option in ipairs(optionList) do
+				local optionValue = option
+				local optionFrame = optionTemplate:Clone()
+				optionFrame.Name = "Option_" .. tostring(index)
+				optionFrame.LayoutOrder = index
+				optionFrame.Visible = true
+				optionFrame.Parent = optionScroll
+				local optionLabel = optionFrame:FindFirstChild("Name")
+				if optionLabel and optionLabel:IsA("TextLabel") then
+					optionLabel.Text = tostring(optionValue)
+				end
+				local optionHitbox = cloneHitbox(optionFrame, "SelectOption", UDim2.new(0, 0, 0, 0), UDim2.fromScale(1, 1), Vector2.zero, optionFrame.ZIndex + 5)
+				local optionBag = newConnectionBag(window)
+				optionBag:Connect(optionHitbox.Activated, function()
+					set(optionValue, true)
+				end)
+			end
+
+			local closedHitbox = cloneHitbox(closed, "OpenDropdown", UDim2.new(0, 0, 0, 0), UDim2.fromScale(1, 1), Vector2.zero, closed.ZIndex + 5)
+			local openedHitbox = cloneHitbox(opened, "CloseDropdown", UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 0, 30), Vector2.zero, opened.ZIndex + 4)
+			local bag = newConnectionBag(window)
+			bag:Connect(closedHitbox.Activated, function()
+				setOpen(true)
+			end)
+			bag:Connect(openedHitbox.Activated, function()
+				setOpen(false)
+			end)
+
+			local control = register({ instance = closed, openedInstance = opened })
 			return attachHandleMethods(control, set, function()
-				return textBox.Text
+				return value
 			end)
 		end)
 
-		tab.createKeybind = addMethod(tab, function(controlName, callback, initialKey)
-			local row = createWidgetFrame(page, 34)
-			row.Name = "Keybind"
-			row.LayoutOrder = #tab._controls + 1
-			local label = createTextLabel(row, tostring(controlName or "Keybind"), {
-				Position = UDim2.new(0, 10, 0, 0),
-				Size = UDim2.new(1, -105, 1, 0),
-				TextTruncate = Enum.TextTruncate.AtEnd,
-				ZIndex = 4,
-			})
-			label.Active = false
-			local keyButton = createTextButton(row, "", {
-				Name = "InputBox",
-				AnchorPoint = Vector2.new(1, 0.5),
-				BackgroundColor3 = Color3.fromRGB(54, 54, 54),
-				Position = UDim2.new(1, -8, 0.5, 0),
-				Size = UDim2.fromOffset(76, 24),
-				TextSize = 11,
-				ZIndex = 4,
-			})
-			round(keyButton, 12)
-			local keyCode = normalizeKeyCode(initialKey)
-			local listening = false
-			local function refresh()
-				keyButton.Text = listening and "Press key..." or (keyCode and keyCode.Name or "Unbound")
-				keyButton.BackgroundColor3 = listening and COLORS.AccentBright or Color3.fromRGB(54, 54, 54)
-			end
-			local control = {
-				instance = row,
-				keyCode = keyCode,
-				callback = callback,
-			}
-			function control._setListening(value)
-				listening = not not value
-				refresh()
-			end
-			local function set(value)
-				keyCode = normalizeKeyCode(value)
-				control.keyCode = keyCode
-				refresh()
-			end
-			refresh()
-			local bag = newConnectionBag(window)
-			bag:Connect(keyButton.Activated, function()
-				setKeybindListening(control, true)
-			end)
-			table.insert(window._keybinds, control)
-			attachHandleMethods(control, set, function()
-				return keyCode
-			end)
-			return register(control)
-		end)
-
-		-- Return both dot-call and colon-call friendly methods.
 		return tab
 	end)
 
@@ -1198,6 +991,12 @@ local function makeWindow(title, topBarColor, toggleKey)
 		for _, bag in ipairs(window._bags) do
 			bag:DisconnectAll()
 		end
+		if currentSizeTween then
+			currentSizeTween:Cancel()
+		end
+		if currentDragTween then
+			currentDragTween:Cancel()
+		end
 		if screenGui.Parent then
 			screenGui:Destroy()
 		end
@@ -1206,15 +1005,14 @@ local function makeWindow(title, topBarColor, toggleKey)
 	window.Destroy = window.destroy
 	window.Unload = window.destroy
 
-	local buttonBag = newConnectionBag(window)
-	buttonBag:Connect(minimizeButton.Activated, function()
-		setMinimized(true)
-	end)
-	buttonBag:Connect(maximizeButton.Activated, function()
-		setMinimized(false)
-	end)
-	buttonBag:Connect(unloadButton.Activated, function()
-		window.destroy()
+	windowBag:Connect(screenGui.Destroying, function()
+		if window._destroyed then
+			return
+		end
+		window._destroyed = true
+		for _, bag in ipairs(window._bags) do
+			bag:DisconnectAll()
+		end
 	end)
 
 	return window

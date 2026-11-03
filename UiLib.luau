@@ -605,11 +605,22 @@ local function makeWindow(title, topBarColor, toggleKey)
 		local currentPosition = main.Position
 		local targetSize = minimized and minimizedSize or originalMainSize
 		local heightDelta = (targetSize.Y.Offset - currentSize.Y.Offset) * uiScale.Scale
+
+		-- Keep the resize's vertical boundary correction inside the tween. The old
+		-- code clamped the fully-expanded window after the animation, which made
+		-- the entire window snap upward when its restored height crossed the
+		-- bottom edge of the viewport.
+		local camera = Workspace.CurrentCamera
+		local viewport = camera and camera.ViewportSize or Vector2.new(1280, 720)
+		local currentTop = main.AbsolutePosition.Y
+		local targetAbsoluteHeight = math.max(1, main.AbsoluteSize.Y + heightDelta)
+		local maximumTop = math.max(8, viewport.Y - targetAbsoluteHeight - 8)
+		local targetTop = math.clamp(currentTop, 8, maximumTop)
 		local targetPosition = UDim2.new(
 			currentPosition.X.Scale,
 			currentPosition.X.Offset,
 			currentPosition.Y.Scale,
-			currentPosition.Y.Offset + main.AnchorPoint.Y * heightDelta
+			currentPosition.Y.Offset + main.AnchorPoint.Y * heightDelta + (targetTop - currentTop)
 		)
 
 		currentSizeTween = TweenService:Create(main, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
@@ -637,8 +648,6 @@ local function makeWindow(title, topBarColor, toggleKey)
 			end
 			if minimized then
 				contentGroup.Visible = false
-			else
-				clampWindowPosition()
 			end
 		end)
 	end
@@ -1060,6 +1069,14 @@ local function makeWindow(title, topBarColor, toggleKey)
 
 		local function cloneControl(templateName, order)
 			local control = templates[templateName]:Clone()
+			-- Keep function/control names compact without touching tab buttons,
+			-- window titles, input placeholders, or message widgets.
+			for _, descendant in ipairs(control:GetDescendants()) do
+				if descendant:IsA("TextLabel") and descendant.Name == "Name" then
+					descendant.TextScaled = false
+					descendant.TextSize = 13
+				end
+			end
 			control.LayoutOrder = order or tab._nextLayoutOrder
 			control.Visible = true
 			tab._nextLayoutOrder = math.max(tab._nextLayoutOrder, control.LayoutOrder + 1)
@@ -1279,7 +1296,8 @@ local function makeWindow(title, topBarColor, toggleKey)
 				nameLabel.Text = tostring(controlName or "Slider")
 				nameLabel.Size = UDim2.new(1, -68, 0, 20)
 				nameLabel.Position = UDim2.fromOffset(0, 1)
-				nameLabel.TextSize = 16
+				nameLabel.TextScaled = false
+				nameLabel.TextSize = 13
 				nameLabel.TextTruncate = Enum.TextTruncate.AtEnd
 			end
 			assert(track and dot and valueLabel, "Slider template is missing its track, dot, or value label.")
@@ -1468,6 +1486,8 @@ local function makeWindow(title, topBarColor, toggleKey)
 				local optionLabel = optionFrame:FindFirstChild("Name")
 				if optionLabel and optionLabel:IsA("TextLabel") then
 					optionLabel.Text = tostring(optionValue)
+					optionLabel.TextScaled = false
+					optionLabel.TextSize = 13
 				end
 				local optionHitbox = cloneHitbox(optionFrame, "SelectOption", UDim2.new(0, 0, 0, 0), UDim2.fromScale(1, 1), Vector2.zero, optionFrame.ZIndex + 5)
 				local optionBag = newConnectionBag(window)

@@ -1,15 +1,15 @@
--- Vexium UI Library
--- Uses StarterGui.cryptic as its visual source so runtime controls keep the
--- exact properties, images, fonts, and layout from the project mockup.
-
 local Players = game:GetService("Players")
-local StarterGui = game:GetService("StarterGui")
+local HttpService = game:GetService("HttpService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
 local library = {}
 local DEFAULT_TOP_BAR_COLOR = Color3.fromRGB(39, 46, 89)
+local TOGGLE_ENABLED_COLOR = Color3.fromRGB(212, 212, 218)
+local EMBEDDED_TEMPLATE_JSON = [================[
+{"c":["ScreenGui","Frame","UICorner","ImageLabel","TextLabel","UIStroke","ScrollingFrame","TextButton","UIListLayout","UIPadding","TextBox"],"n":["cryptic","main","TopBar","UICorner","TopBar_Extension","Border","Exit_Unload","Title","Minimize","Maximize","AmbientShadow","UmbraShadow","PenumbraShadow","UIStroke","TabButtonContainer","TabButtonContainerExtension","Holder","Home","UIListLayout","TabHolder","_Title","Toggle","ToggleBtnBack","Name","UIPadding","_Border","_Space","Button","Image","Label","Divider","Borderline","Input","InputBox","Slider","slider_bg","slider_dot","Value_Label","Dropdown_Closed","State","Pick","Dropdown_Opened","Options","Option A","Option B","Keybind","notification","title","text","toast"],"p":["Enabled","ClipToDeviceSafeArea","ScreenInsets","DisplayOrder","ResetOnSpawn","IgnoreGuiInset","SafeAreaCompatibility","ZIndexBehavior","LayoutOrder","BorderMode","Interactable","AnchorPoint","SizeConstraint","ZIndex","AutomaticSize","Size","ClipsDescendants","BorderColor3","Active","Visible","Rotation","SelectionOrder","BackgroundTransparency","Position","BorderSizePixel","Selectable","SelectionGroup","BackgroundColor3","CornerRadius","ImageTransparency","SliceCenter","Image","TileSize","ImageRectSize","ResampleMode","ScaleType","ImageColor3","ImageRectOffset","SliceScale","TextWrapped","TextDirection","TextStrokeTransparency","TextTruncate","RichText","TextYAlignment","TextScaled","FontFace","OpenTypeFeatures","TextXAlignment","TextTransparency","Text","LineHeight","TextStrokeColor3","Font","TextSize","MaxVisibleGraphemes","TextColor3","ApplyStrokeMode","LineJoinMode","Color","Transparency","Thickness","ScrollingDirection","CanvasSize","MidImage","CanvasPosition","ElasticBehavior","TopImage","VerticalScrollBarPosition","ScrollBarImageColor3","VerticalScrollBarInset","ScrollBarThickness","ScrollBarImageTransparency","AutomaticCanvasSize","ScrollingEnabled","BottomImage","HorizontalScrollBarInset","Modal","AutoButtonColor","Style","VerticalAlignment","FillDirection","HorizontalAlignment","Wraps","Padding","ItemLineAlignment","SortOrder","PaddingBottom","PaddingTop","PaddingLeft","PaddingRight","TextEditable","MultiLine","ClearTextOnFocus","PlaceholderColor3","PlaceholderText"],"r":[1,1,{"1":true,"2":true,"3":["e","ScreenInsets","DeviceSafeInsets"],"4":0,"5":false,"6":true,"7":["e","SafeAreaCompatibility","FullscreenExtension"],"8":["e","ZIndexBehavior","Sibling"]},[[2,2,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0.5,0.5],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,367,0,302],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":0,"24":["U",0.212890625,0,0.6107594966888428,0],"25":0,"26":false,"27":false,"28":["C",0.16862745583057404,0.16862745583057404,0.16862745583057404]},[[2,3,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",1,0,0,30],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":0,"24":["U",0,0,0,0],"25":0,"26":false,"27":false,"28":["C",0.15294118225574493,0.18039216101169586,0.3490196168422699]},[[3,4,{"29":["u",0,8]},[]],[2,5,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",1,0,-0.5333333611488342,30],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":0,"24":["U",0,0,0.5333333611488342,0],"25":0,"26":false,"27":false,"28":["C",0.15294118225574493,0.18039216101169586,0.3490196168422699]},[]],[2,6,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",1,0,0,1],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":0,"24":["U",0,0,1,0],"25":0,"26":false,"27":false,"28":["C",0.2039215862751007,0.2039215862751007,0.2039215862751007]},[]],[4,7,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,25,0,25],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0.9200000166893005,0,0.06700000166893005,0],"25":0,"26":false,"27":false,"28":["C",0.29411765933036804,0.29411765933036804,0.29411765933036804],"30":0,"31":["r",0,0,0,0],"32":"http://www.roblox.com/asset/?id=6031094678","33":["U",1,0,1,0],"34":["v",0,0],"35":["e","ResamplerMode","Default"],"36":["e","ScaleType","Stretch"],"37":["C",0.8549020290374756,0.8549020290374756,0.8549020290374756],"38":["v",0,0],"39":1},[]],[5,8,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,180,0,30],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0.0272479560226202,0,0,0],"25":0,"26":false,"27":false,"28":["C",1,1,1],"40":true,"41":["e","TextDirection","Auto"],"42":1,"43":["e","TextTruncate","None"],"44":false,"45":["e","TextYAlignment","Center"],"46":true,"47":["f","rbxassetid://12187607287","Regular","Normal"],"48":"","49":["e","TextXAlignment","Left"],"50":0,"51":"Vexium","52":1,"53":["C",0,0,0],"54":["e","Font","Unknown"],"55":14,"56":-1,"57":["C",0.8705883026123047,0.8705883026123047,0.8705883026123047]},[]],[4,9,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,25,0,25],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0.8518801331520081,0,0.06699981540441513,0],"25":0,"26":false,"27":false,"28":["C",0.29411765933036804,0.29411765933036804,0.29411765933036804],"30":0,"31":["r",0,0,0,0],"32":"http://www.roblox.com/asset/?id=6035067836","33":["U",1,0,1,0],"34":["v",0,0],"35":["e","ResamplerMode","Default"],"36":["e","ScaleType","Stretch"],"37":["C",0.8549020290374756,0.8549020290374756,0.8549020290374756],"38":["v",0,0],"39":1},[]],[4,10,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,25,0,25],"17":false,"18":["C",0,0,0],"19":false,"20":false,"21":0,"22":0,"23":1,"24":["U",0.8518801331520081,0,0.06699981540441513,0],"25":0,"26":false,"27":false,"28":["C",0.29411765933036804,0.29411765933036804,0.29411765933036804],"30":0,"31":["r",0,0,0,0],"32":"http://www.roblox.com/asset/?id=6031630212","33":["U",1,0,1,0],"34":["v",0,0],"35":["e","ResamplerMode","Default"],"36":["e","ScaleType","Stretch"],"37":["C",0.8549020290374756,0.8549020290374756,0.8549020290374756],"38":["v",0,0],"39":1},[]]]],[3,4,{"29":["u",0,8]},[]],[4,11,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0.5,0.5],"13":["e","SizeConstraint","RelativeXY"],"14":0,"15":["e","AutomaticSize","None"],"16":["U",1,10,1,10],"17":false,"18":["C",0.10588236153125763,0.16470588743686676,0.20784315466880798],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0.5,0,0.5,0],"25":1,"26":false,"27":false,"28":["C",0.6392157077789307,0.6352941393852234,0.6470588445663452],"30":0.800000011920929,"31":["r",10,10,118,118],"32":"rbxassetid://1316045217","33":["U",1,0,1,0],"34":["v",0,0],"35":["e","ResamplerMode","Default"],"36":["e","ScaleType","Slice"],"37":["C",0,0,0],"38":["v",0,0],"39":1},[]],[4,12,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0.5,0.5],"13":["e","SizeConstraint","RelativeXY"],"14":0,"15":["e","AutomaticSize","None"],"16":["U",1,10,1,10],"17":false,"18":["C",0.10588236153125763,0.16470588743686676,0.20784315466880798],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0.5,0,0.5,0],"25":1,"26":false,"27":false,"28":["C",0.6392157077789307,0.6352941393852234,0.6470588445663452],"30":0.8600000143051147,"31":["r",10,10,118,118],"32":"rbxassetid://1316045217","33":["U",1,0,1,0],"34":["v",0,0],"35":["e","ResamplerMode","Default"],"36":["e","ScaleType","Slice"],"37":["C",0,0,0],"38":["v",0,0],"39":1},[]],[4,13,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0.5,0.5],"13":["e","SizeConstraint","RelativeXY"],"14":0,"15":["e","AutomaticSize","None"],"16":["U",1,10,1,10],"17":false,"18":["C",0.10588236153125763,0.16470588743686676,0.20784315466880798],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0.5,0,0.5,0],"25":1,"26":false,"27":false,"28":["C",0.6392157077789307,0.6352941393852234,0.6470588445663452],"30":0.8799999952316284,"31":["r",10,10,118,118],"32":"rbxassetid://1316045217","33":["U",1,0,1,0],"34":["v",0,0],"35":["e","ResamplerMode","Default"],"36":["e","ScaleType","Slice"],"37":["C",0,0,0],"38":["v",0,0],"39":1},[]],[6,14,{"1":true,"58":["e","ApplyStrokeMode","Contextual"],"59":["e","LineJoinMode","Round"],"60":["C",0,0,0],"61":0.6299999952316284,"62":1},[]],[2,15,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,98,0,271],"17":false,"18":["C",0.11372549086809158,0.11372549086809158,0.11372549086809158],"19":false,"20":true,"21":0,"22":0,"23":0,"24":["U",0,0,0.10264900326728821,0],"25":0,"26":false,"27":false,"28":["C",0.11372549086809158,0.11372549086809158,0.11372549086809158]},[[3,4,{"29":["u",0,8]},[]],[2,16,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,81,0,271],"17":false,"18":["C",0.11372549086809158,0.11372549086809158,0.11372549086809158],"19":false,"20":true,"21":0,"22":0,"23":0,"24":["U",0.1734693944454193,0,0,0],"25":0,"26":false,"27":false,"28":["C",0.11372549086809158,0.11372549086809158,0.11372549086809158]},[]],[2,16,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,98,0,45],"17":false,"18":["C",0.11372549086809158,0.11372549086809158,0.11372549086809158],"19":false,"20":true,"21":0,"22":0,"23":0,"24":["U",0,0,0,0],"25":0,"26":false,"27":false,"28":["C",0.11372549086809158,0.11372549086809158,0.11372549086809158]},[]],[2,6,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,1,1,0],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":0.5,"24":["U",1,0,0,1],"25":0,"26":false,"27":false,"28":["C",0.2039215862751007,0.2039215862751007,0.2039215862751007]},[]],[7,17,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,98,0,270],"17":true,"18":["C",0,0,0],"19":true,"20":true,"21":0,"22":0,"23":1,"24":["U",0,0,0.0036900369450449944,0],"25":0,"26":true,"27":true,"28":["C",1,1,1],"63":["e","ScrollingDirection","XY"],"64":["U",0,0,2,0],"65":"rbxasset://textures/ui/Scroll/scroll-middle.png","66":["v",0,0],"67":["e","ElasticBehavior","WhenScrollable"],"68":"rbxasset://textures/ui/Scroll/scroll-top.png","69":["e","VerticalScrollBarPosition","Right"],"70":["C",0.47843137383461,0.47843137383461,0.47843137383461],"71":["e","ScrollBarInset","None"],"72":0,"73":0,"74":["e","AutomaticSize","None"],"75":true,"76":"rbxasset://textures/ui/Scroll/scroll-bottom.png","77":["e","ScrollBarInset","None"]},[[8,18,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",1,0,0,25],"17":false,"18":["C",0,0,0],"19":true,"20":true,"21":0,"22":0,"23":0,"24":["U",0,0,0,0],"25":0,"26":true,"27":false,"28":["C",0.1411764770746231,0.1411764770746231,0.1411764770746231],"40":false,"41":["e","TextDirection","Auto"],"42":1,"43":["e","TextTruncate","None"],"44":false,"45":["e","TextYAlignment","Center"],"46":false,"47":["f","rbxassetid://12187607287","Regular","Normal"],"48":"","49":["e","TextXAlignment","Center"],"50":0,"51":"Home","52":1,"53":["C",0,0,0],"54":["e","Font","Unknown"],"55":21,"56":-1,"57":["C",0.8156863451004028,0.8156863451004028,0.8156863451004028],"78":false,"79":true,"80":["e","ButtonStyle","Custom"]},[[3,4,{"29":["u",0,4]},[]]]],[9,19,{"81":["e","VerticalAlignment","Top"],"82":["e","FillDirection","Vertical"],"83":["e","HorizontalAlignment","Left"],"84":false,"85":["u",0,1],"86":["e","ItemLineAlignment","Automatic"],"87":["e","SortOrder","LayoutOrder"]},[]],[8,18,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",1,0,0,25],"17":false,"18":["C",0,0,0],"19":true,"20":true,"21":0,"22":0,"23":0,"24":["U",0,0,0,0],"25":0,"26":true,"27":false,"28":["C",0.1411764770746231,0.1411764770746231,0.1411764770746231],"40":false,"41":["e","TextDirection","Auto"],"42":1,"43":["e","TextTruncate","None"],"44":false,"45":["e","TextYAlignment","Center"],"46":false,"47":["f","rbxassetid://12187607287","Regular","Normal"],"48":"","49":["e","TextXAlignment","Center"],"50":0,"51":"Home","52":1,"53":["C",0,0,0],"54":["e","Font","Unknown"],"55":21,"56":-1,"57":["C",0.8156863451004028,0.8156863451004028,0.8156863451004028],"78":false,"79":true,"80":["e","ButtonStyle","Custom"]},[[3,4,{"29":["u",0,4]},[]]]]]]]],[2,20,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,267,0,269],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0.2697547674179077,0,0.10596026480197906,0],"25":0,"26":false,"27":false,"28":["C",1,1,1]},[[7,18,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",1,0,1,0],"17":true,"18":["C",0,0,0],"19":true,"20":true,"21":0,"22":0,"23":1,"24":["U",0,0,0,0],"25":0,"26":true,"27":true,"28":["C",1,1,1],"63":["e","ScrollingDirection","XY"],"64":["U",0,0,2,0],"65":"rbxasset://textures/ui/Scroll/scroll-middle.png","66":["v",0,0],"67":["e","ElasticBehavior","WhenScrollable"],"68":"rbxasset://textures/ui/Scroll/scroll-top.png","69":["e","VerticalScrollBarPosition","Right"],"70":["C",0.47843137383461,0.47843137383461,0.47843137383461],"71":["e","ScrollBarInset","None"],"72":2,"73":0.6000000238418579,"74":["e","AutomaticSize","None"],"75":true,"76":"rbxasset://textures/ui/Scroll/scroll-bottom.png","77":["e","ScrollBarInset","None"]},[[9,19,{"81":["e","VerticalAlignment","Top"],"82":["e","FillDirection","Vertical"],"83":["e","HorizontalAlignment","Center"],"84":false,"85":["u",0,2],"86":["e","ItemLineAlignment","Automatic"],"87":["e","SortOrder","LayoutOrder"]},[]],[5,21,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",1,0,0,20],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0,0,0,0],"25":0,"26":false,"27":false,"28":["C",1,1,1],"40":false,"41":["e","TextDirection","Auto"],"42":1,"43":["e","TextTruncate","None"],"44":false,"45":["e","TextYAlignment","Center"],"46":false,"47":["f","rbxassetid://12187607287","Regular","Normal"],"48":"","49":["e","TextXAlignment","Center"],"50":0,"51":"Home","52":1,"53":["C",0,0,0],"54":["e","Font","Unknown"],"55":23,"56":-1,"57":["C",0.7725490927696228,0.7725490927696228,0.7725490927696228]},[]],[2,22,{"9":5,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0.9500000476837158,0,0,30],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":0,"24":["U",0.050000034272670746,0,0.05223874747753143,0],"25":0,"26":false,"27":false,"28":["C",0.12941177189350128,0.12941177189350128,0.12941177189350128]},[[3,4,{"29":["u",0,4]},[]],[2,23,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0.5,0.5],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,20,0,20],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":0,"24":["U",0.9300000071525574,0,0.5,0],"25":0,"26":false,"27":false,"28":["C",0.1882353127002716,0.1882353127002716,0.1882353127002716]},[[3,4,{"29":["u",0,4]},[]]]],[5,24,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0.8639183640480042,0,1,0],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0,0,0,0],"25":0,"26":false,"27":false,"28":["C",1,1,1],"40":false,"41":["e","TextDirection","Auto"],"42":1,"43":["e","TextTruncate","None"],"44":false,"45":["e","TextYAlignment","Center"],"46":false,"47":["f","rbxassetid://12187607287","Regular","Normal"],"48":"","49":["e","TextXAlignment","Left"],"50":0,"51":"Toggle","52":1,"53":["C",0,0,0],"54":["e","Font","Unknown"],"55":18,"56":-1,"57":["C",0.7058823704719543,0.7058823704719543,0.7058823704719543]},[]],[10,25,{"88":["u",0,0],"89":["u",0,0],"90":["u",0,10],"91":["u",0,0]},[]]]],[10,25,{"88":["u",0,2],"89":["u",0,0],"90":["u",0,2],"91":["u",0,2]},[]],[2,26,{"9":1,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0.5,0.5],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0.8999999761581421,0,0,1],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":0.5,"24":["U",0.5,0,1,0],"25":0,"26":false,"27":false,"28":["C",0.2039215862751007,0.2039215862751007,0.2039215862751007]},[]],[2,27,{"9":2,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0.5,0.5],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0.8999999761581421,0,0,1],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0.5,0,1,0],"25":0,"26":false,"27":false,"28":["C",0.2039215862751007,0.2039215862751007,0.2039215862751007]},[]],[2,28,{"9":4,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0.9500000476837158,0,0,30],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":0,"24":["U",0.050000034272670746,0,0.05223874747753143,0],"25":0,"26":false,"27":false,"28":["C",0.12941177189350128,0.12941177189350128,0.12941177189350128]},[[3,4,{"29":["u",0,4]},[]],[5,24,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0.8639183640480042,0,1,0],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0,0,0,0],"25":0,"26":false,"27":false,"28":["C",1,1,1],"40":false,"41":["e","TextDirection","Auto"],"42":1,"43":["e","TextTruncate","None"],"44":false,"45":["e","TextYAlignment","Center"],"46":false,"47":["f","rbxassetid://12187607287","Regular","Normal"],"48":"","49":["e","TextXAlignment","Left"],"50":0,"51":"Button","52":1,"53":["C",0,0,0],"54":["e","Font","Unknown"],"55":18,"56":-1,"57":["C",0.7058823704719543,0.7058823704719543,0.7058823704719543]},[]],[10,25,{"88":["u",0,0],"89":["u",0,0],"90":["u",0,10],"91":["u",0,0]},[]],[4,29,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0.5,0.5],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,20,0,20],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0.9300000071525574,0,0.5,0],"25":0,"26":false,"27":false,"28":["C",0.1882352977991104,0.1882352977991104,0.1882352977991104],"30":0,"31":["r",0,0,0,0],"32":"http://www.roblox.com/asset/?id=6034989547","33":["U",1,0,1,0],"34":["v",0,0],"35":["e","ResamplerMode","Default"],"36":["e","ScaleType","Stretch"],"37":["C",0.29411765933036804,0.29411765933036804,0.29411765933036804],"38":["v",0,0],"39":1},[[3,4,{"29":["u",0,4]},[]]]]]],[2,30,{"9":3,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0.9500000476837158,0,-0.00749063678085804,30],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":0.5,"24":["U",0.024999989196658134,0,0.1716417372226715,0],"25":0,"26":false,"27":false,"28":["C",0.12941177189350128,0.12941177189350128,0.12941177189350128]},[[3,4,{"29":["u",0,4]},[]],[5,24,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0.8639183640480042,0,1,0],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0,0,0,0],"25":0,"26":false,"27":false,"28":["C",1,1,1],"40":false,"41":["e","TextDirection","Auto"],"42":1,"43":["e","TextTruncate","None"],"44":false,"45":["e","TextYAlignment","Center"],"46":false,"47":["f","rbxassetid://12187607287","Regular","Normal"],"48":"","49":["e","TextXAlignment","Left"],"50":0,"51":"Label","52":1,"53":["C",0,0,0],"54":["e","Font","Unknown"],"55":18,"56":-1,"57":["C",0.7058823704719543,0.7058823704719543,0.7058823704719543]},[]],[10,25,{"88":["u",0,0],"89":["u",0,0],"90":["u",0,10],"91":["u",0,0]},[]]]],[2,31,{"9":6,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0.9500000476837158,0,-0.033707864582538605,30],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0.024999989196658134,0,0.1641511470079422,0],"25":0,"26":false,"27":false,"28":["C",0.12941177189350128,0.12941177189350128,0.12941177189350128]},[[3,4,{"29":["u",0,4]},[]],[10,25,{"88":["u",0,0],"89":["u",0,0],"90":["u",0,10],"91":["u",0,0]},[]],[2,32,{"9":6,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0.5,0.5],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0.8999999761581421,0,0,1],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":0.5,"24":["U",0.5,0,0.5,0],"25":0,"26":false,"27":false,"28":["C",0.2039215862751007,0.2039215862751007,0.2039215862751007]},[]]]],[2,33,{"9":5,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0.9500000476837158,0,0,30],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":0,"24":["U",0.050000034272670746,0,0.05223874747753143,0],"25":0,"26":false,"27":false,"28":["C",0.12941177189350128,0.12941177189350128,0.12941177189350128]},[[3,4,{"29":["u",0,4]},[]],[5,24,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0.8639183640480042,0,1,0],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0,0,0,0],"25":0,"26":false,"27":false,"28":["C",1,1,1],"40":false,"41":["e","TextDirection","Auto"],"42":1,"43":["e","TextTruncate","None"],"44":false,"45":["e","TextYAlignment","Center"],"46":false,"47":["f","rbxassetid://12187607287","Regular","Normal"],"48":"","49":["e","TextXAlignment","Left"],"50":0,"51":"Input","52":1,"53":["C",0,0,0],"54":["e","Font","Unknown"],"55":18,"56":-1,"57":["C",0.7058823704719543,0.7058823704719543,0.7058823704719543]},[]],[10,25,{"88":["u",0,0],"89":["u",0,0],"90":["u",0,10],"91":["u",0,0]},[]],[11,34,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0.5,0.5],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,80,0,18],"17":false,"18":["C",0,0,0],"19":true,"20":true,"21":0,"22":0,"23":0,"24":["U",0.800000011920929,0,0.5,0],"25":0,"26":true,"27":false,"28":["C",0.24705883860588074,0.24705883860588074,0.24705883860588074],"40":true,"41":["e","TextDirection","Auto"],"42":1,"43":["e","TextTruncate","None"],"44":false,"45":["e","TextYAlignment","Center"],"46":true,"47":["f","rbxassetid://12187607287","Regular","Normal"],"48":"","49":["e","TextXAlignment","Center"],"50":0,"51":"TextBox","52":1,"53":["C",0,0,0],"54":["e","Font","Unknown"],"55":14,"56":-1,"57":["C",0.7058823704719543,0.7058823704719543,0.7058823704719543],"92":true,"93":false,"94":true,"95":["C",0.43529415130615234,0.43529415130615234,0.43529415130615234],"96":""},[[3,4,{"29":["u",0,20]},[]],[6,14,{"1":true,"58":["e","ApplyStrokeMode","Border"],"59":["e","LineJoinMode","Round"],"60":["C",0.3333333432674408,0.3333333432674408,0.3333333432674408],"61":0.2800000011920929,"62":1},[]]]]]],[2,35,{"9":5,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0.9500000476837158,0,0,30],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":0,"24":["U",0.050000034272670746,0,0.05223874747753143,0],"25":0,"26":false,"27":false,"28":["C",0.12941177189350128,0.12941177189350128,0.12941177189350128]},[[3,4,{"29":["u",0,4]},[]],[5,24,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0.8639183640480042,0,1,0],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0,0,0,0],"25":0,"26":false,"27":false,"28":["C",1,1,1],"40":false,"41":["e","TextDirection","Auto"],"42":1,"43":["e","TextTruncate","None"],"44":false,"45":["e","TextYAlignment","Center"],"46":false,"47":["f","rbxassetid://12187607287","Regular","Normal"],"48":"","49":["e","TextXAlignment","Left"],"50":0,"51":"Slider","52":1,"53":["C",0,0,0],"54":["e","Font","Unknown"],"55":18,"56":-1,"57":["C",0.7058823704719543,0.7058823704719543,0.7058823704719543]},[]],[10,25,{"88":["u",0,0],"89":["u",0,0],"90":["u",0,10],"91":["u",0,0]},[]],[2,36,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0.5,0.5],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,150,0,4],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":0,"24":["U",0.5,0,0.5,0],"25":0,"26":false,"27":false,"28":["C",0.1882353127002716,0.1882353127002716,0.1882353127002716]},[[2,37,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0.5,0.5],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,6,0,10],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":0,"24":["U",0,0,0.5,0],"25":0,"26":false,"27":false,"28":["C",0.7450980544090271,0.7450980544090271,0.7450980544090271]},[[3,4,{"29":["u",0,8]},[]]]],[3,4,{"29":["u",0,8]},[]]]],[5,38,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0.5,0.5],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,44,0,26],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0.9044194221496582,0,0.5,0],"25":0,"26":false,"27":false,"28":["C",1,1,1],"40":true,"41":["e","TextDirection","Auto"],"42":1,"43":["e","TextTruncate","None"],"44":false,"45":["e","TextYAlignment","Center"],"46":true,"47":["f","rbxassetid://12187607287","Regular","Normal"],"48":"","49":["e","TextXAlignment","Center"],"50":0,"51":"00","52":1,"53":["C",0,0,0],"54":["e","Font","Unknown"],"55":14,"56":-1,"57":["C",0.4941176772117615,0.4941176772117615,0.4941176772117615]},[]]]],[2,39,{"9":5,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0.9500000476837158,0,0,30],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":0,"24":["U",0.050000034272670746,0,0.05223874747753143,0],"25":0,"26":false,"27":false,"28":["C",0.12941177189350128,0.12941177189350128,0.12941177189350128]},[[3,4,{"29":["u",0,4]},[]],[5,24,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,207,0,30],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0,0,0,0],"25":0,"26":false,"27":false,"28":["C",1,1,1],"40":false,"41":["e","TextDirection","Auto"],"42":1,"43":["e","TextTruncate","None"],"44":false,"45":["e","TextYAlignment","Center"],"46":false,"47":["f","rbxassetid://12187607287","Regular","Normal"],"48":"","49":["e","TextXAlignment","Left"],"50":0,"51":"Dropdown","52":1,"53":["C",0,0,0],"54":["e","Font","Unknown"],"55":18,"56":-1,"57":["C",0.7058823704719543,0.7058823704719543,0.7058823704719543]},[]],[10,25,{"88":["u",0,0],"89":["u",0,0],"90":["u",0,10],"91":["u",0,0]},[]],[4,40,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0.5,0.5],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,25,0,25],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0.9300000071525574,0,0.5,0],"25":0,"26":false,"27":false,"28":["C",1,1,1],"30":0,"31":["r",0,0,0,0],"32":"http://www.roblox.com/asset/?id=6034818365","33":["U",1,0,1,0],"34":["v",0,0],"35":["e","ResamplerMode","Default"],"36":["e","ScaleType","Stretch"],"37":["C",0.5137255191802979,0.5137255191802979,0.5137255191802979],"38":["v",0,0],"39":1},[]],[5,41,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,89,0,30],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0.49197420477867126,0,0,0],"25":0,"26":false,"27":false,"28":["C",1,1,1],"40":false,"41":["e","TextDirection","Auto"],"42":1,"43":["e","TextTruncate","None"],"44":false,"45":["e","TextYAlignment","Center"],"46":false,"47":["f","rbxassetid://12187607287","Regular","Normal"],"48":"","49":["e","TextXAlignment","Right"],"50":0,"51":"Dropdown","52":1,"53":["C",0,0,0],"54":["e","Font","Unknown"],"55":16,"56":-1,"57":["C",0.4901961088180542,0.4901961088180542,0.4901961088180542]},[]]]],[2,42,{"9":5,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0.9500000476837158,0,0.1910112351179123,30],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":0,"24":["U",0.024999989196658134,0,0.40295711159706116,0],"25":0,"26":false,"27":false,"28":["C",0.12941177189350128,0.12941177189350128,0.12941177189350128]},[[3,4,{"29":["u",0,4]},[]],[5,24,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,207,0,30],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0,0,0,0],"25":0,"26":false,"27":false,"28":["C",1,1,1],"40":false,"41":["e","TextDirection","Auto"],"42":1,"43":["e","TextTruncate","None"],"44":false,"45":["e","TextYAlignment","Center"],"46":false,"47":["f","rbxassetid://12187607287","Regular","Normal"],"48":"","49":["e","TextXAlignment","Left"],"50":0,"51":"Dropdown","52":1,"53":["C",0,0,0],"54":["e","Font","Unknown"],"55":18,"56":-1,"57":["C",0.7058823704719543,0.7058823704719543,0.7058823704719543]},[]],[10,25,{"88":["u",0,0],"89":["u",0,0],"90":["u",0,10],"91":["u",0,0]},[]],[4,40,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0.5,0.5],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,25,0,25],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":90,"22":0,"23":1,"24":["U",0.9300000071525574,0,0.10719741135835648,0],"25":0,"26":false,"27":false,"28":["C",1,1,1],"30":0,"31":["r",0,0,0,0],"32":"http://www.roblox.com/asset/?id=6034818365","33":["U",1,0,1,0],"34":["v",0,0],"35":["e","ResamplerMode","Default"],"36":["e","ScaleType","Stretch"],"37":["C",0.5137255191802979,0.5137255191802979,0.5137255191802979],"38":["v",0,0],"39":1},[]],[5,41,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,89,0,30],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0.49197420477867126,0,0,0],"25":0,"26":false,"27":false,"28":["C",1,1,1],"40":false,"41":["e","TextDirection","Auto"],"42":1,"43":["e","TextTruncate","None"],"44":false,"45":["e","TextYAlignment","Center"],"46":false,"47":["f","rbxassetid://12187607287","Regular","Normal"],"48":"","49":["e","TextXAlignment","Right"],"50":0,"51":"Dropdown","52":1,"53":["C",0,0,0],"54":["e","Font","Unknown"],"55":16,"56":-1,"57":["C",0.4901961088180542,0.4901961088180542,0.4901961088180542]},[]],[7,43,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",1.0416927337646484,0,0.8034855127334595,0],"17":true,"18":["C",0,0,0],"19":true,"20":true,"21":0,"22":0,"23":1,"24":["U",-0.04169272258877754,0,0.21162228286266327,0],"25":0,"26":true,"27":true,"28":["C",1,1,1],"63":["e","ScrollingDirection","XY"],"64":["U",0,0,2,0],"65":"rbxasset://textures/ui/Scroll/scroll-middle.png","66":["v",0,0],"67":["e","ElasticBehavior","WhenScrollable"],"68":"rbxasset://textures/ui/Scroll/scroll-top.png","69":["e","VerticalScrollBarPosition","Right"],"70":["C",0,0,0],"71":["e","ScrollBarInset","None"],"72":0,"73":0,"74":["e","AutomaticSize","None"],"75":true,"76":"rbxasset://textures/ui/Scroll/scroll-bottom.png","77":["e","ScrollBarInset","None"]},[[2,44,{"9":4,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0.9999999403953552,0,0,30],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":0,"24":["U",6.107179473247015e-8,0,0.05223871394991875,0],"25":0,"26":false,"27":false,"28":["C",0.11372549831867218,0.11372549831867218,0.11372549831867218]},[[3,4,{"29":["u",0,4]},[]],[5,24,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",1,0,1,0],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0,0,0,0],"25":0,"26":false,"27":false,"28":["C",1,1,1],"40":false,"41":["e","TextDirection","Auto"],"42":1,"43":["e","TextTruncate","None"],"44":false,"45":["e","TextYAlignment","Center"],"46":false,"47":["f","rbxassetid://12187607287","Regular","Normal"],"48":"","49":["e","TextXAlignment","Left"],"50":0,"51":"Option A","52":1,"53":["C",0,0,0],"54":["e","Font","Unknown"],"55":18,"56":-1,"57":["C",0.7058823704719543,0.7058823704719543,0.7058823704719543]},[]],[10,25,{"88":["u",0,0],"89":["u",0,0],"90":["u",0,10],"91":["u",0,0]},[]]]],[9,19,{"81":["e","VerticalAlignment","Top"],"82":["e","FillDirection","Vertical"],"83":["e","HorizontalAlignment","Left"],"84":false,"85":["u",0,1],"86":["e","ItemLineAlignment","Automatic"],"87":["e","SortOrder","LayoutOrder"]},[]],[2,45,{"9":4,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0.9999999403953552,0,0,30],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":0,"24":["U",6.107179473247015e-8,0,0.05223871394991875,0],"25":0,"26":false,"27":false,"28":["C",0.11372549831867218,0.11372549831867218,0.11372549831867218]},[[3,4,{"29":["u",0,4]},[]],[5,24,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",1,0,1,0],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0,0,0,0],"25":0,"26":false,"27":false,"28":["C",1,1,1],"40":false,"41":["e","TextDirection","Auto"],"42":1,"43":["e","TextTruncate","None"],"44":false,"45":["e","TextYAlignment","Center"],"46":false,"47":["f","rbxassetid://12187607287","Regular","Normal"],"48":"","49":["e","TextXAlignment","Left"],"50":0,"51":"Option B","52":1,"53":["C",0,0,0],"54":["e","Font","Unknown"],"55":18,"56":-1,"57":["C",0.7058823704719543,0.7058823704719543,0.7058823704719543]},[]],[10,25,{"88":["u",0,0],"89":["u",0,0],"90":["u",0,10],"91":["u",0,0]},[]]]]]]]],[2,46,{"9":5,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0.9500000476837158,0,0,30],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":0,"24":["U",0.050000034272670746,0,0.05223874747753143,0],"25":0,"26":false,"27":false,"28":["C",0.12941177189350128,0.12941177189350128,0.12941177189350128]},[[3,4,{"29":["u",0,4]},[]],[5,24,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0.8639183640480042,0,1,0],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0,0,0,0],"25":0,"26":false,"27":false,"28":["C",1,1,1],"40":false,"41":["e","TextDirection","Auto"],"42":1,"43":["e","TextTruncate","None"],"44":false,"45":["e","TextYAlignment","Center"],"46":false,"47":["f","rbxassetid://12187607287","Regular","Normal"],"48":"","49":["e","TextXAlignment","Left"],"50":0,"51":"Keybind","52":1,"53":["C",0,0,0],"54":["e","Font","Unknown"],"55":18,"56":-1,"57":["C",0.7058823704719543,0.7058823704719543,0.7058823704719543]},[]],[10,25,{"88":["u",0,0],"89":["u",0,0],"90":["u",0,10],"91":["u",0,0]},[]],[11,34,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0.5,0.5],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,47,0,18],"17":false,"18":["C",0,0,0],"19":true,"20":true,"21":0,"22":0,"23":0,"24":["U",0.8687930703163147,0,0.5,0],"25":0,"26":true,"27":false,"28":["C",0.24705883860588074,0.24705883860588074,0.24705883860588074],"40":true,"41":["e","TextDirection","Auto"],"42":1,"43":["e","TextTruncate","None"],"44":false,"45":["e","TextYAlignment","Center"],"46":true,"47":["f","rbxassetid://12187607287","Regular","Normal"],"48":"","49":["e","TextXAlignment","Center"],"50":0,"51":"Key","52":1,"53":["C",0,0,0],"54":["e","Font","Unknown"],"55":14,"56":-1,"57":["C",0.7058823704719543,0.7058823704719543,0.7058823704719543],"92":true,"93":false,"94":true,"95":["C",0.43529415130615234,0.43529415130615234,0.43529415130615234],"96":""},[[3,4,{"29":["u",0,20]},[]],[6,14,{"1":true,"58":["e","ApplyStrokeMode","Border"],"59":["e","LineJoinMode","Round"],"60":["C",0.3333333432674408,0.3333333432674408,0.3333333432674408],"61":0.2800000011920929,"62":1},[]]]]]]]]]]]],[2,47,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,253,0,85],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":0,"24":["U",0.7867187261581421,0,0.7990506291389465,0],"25":0,"26":false,"27":false,"28":["C",0.10196079313755035,0.10196079313755035,0.10196079313755035]},[[3,4,{"29":["u",0,8]},[]],[5,48,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,253,0,26],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0,0,0,0],"25":0,"26":false,"27":false,"28":["C",1,1,1],"40":true,"41":["e","TextDirection","Auto"],"42":1,"43":["e","TextTruncate","None"],"44":false,"45":["e","TextYAlignment","Center"],"46":true,"47":["f","rbxassetid://12187607287","Regular","Normal"],"48":"","49":["e","TextXAlignment","Center"],"50":0,"51":"Title","52":1,"53":["C",0,0,0],"54":["e","Font","Unknown"],"55":14,"56":-1,"57":["C",0.8705883026123047,0.8705883026123047,0.8705883026123047]},[]],[5,49,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,253,0,49],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0,0,0.30588236451148987,0],"25":0,"26":false,"27":false,"28":["C",1,1,1],"40":true,"41":["e","TextDirection","Auto"],"42":1,"43":["e","TextTruncate","None"],"44":false,"45":["e","TextYAlignment","Center"],"46":true,"47":["f","rbxassetid://12187607287","Regular","Normal"],"48":"","49":["e","TextXAlignment","Center"],"50":0,"51":"Label","52":1,"53":["C",0,0,0],"54":["e","Font","Unknown"],"55":14,"56":-1,"57":["C",0.7058823704719543,0.7058823704719543,0.7058823704719543]},[]],[6,14,{"1":true,"58":["e","ApplyStrokeMode","Contextual"],"59":["e","LineJoinMode","Round"],"60":["C",0.38431376218795776,0.38431376218795776,0.38431376218795776],"61":0,"62":1},[]]]],[2,50,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",0,130,0,39],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":0,"24":["U",0.44921875,0,0.06716977059841156,0],"25":0,"26":false,"27":false,"28":["C",0.10196079313755035,0.10196079313755035,0.10196079313755035]},[[3,4,{"29":["u",0,8]},[]],[5,49,{"9":0,"10":["e","BorderMode","Outline"],"11":true,"12":["v",0,0],"13":["e","SizeConstraint","RelativeXY"],"14":1,"15":["e","AutomaticSize","None"],"16":["U",1,0,1,0],"17":false,"18":["C",0,0,0],"19":false,"20":true,"21":0,"22":0,"23":1,"24":["U",0,0,-0.0018099271692335606,0],"25":0,"26":false,"27":false,"28":["C",1,1,1],"40":true,"41":["e","TextDirection","Auto"],"42":1,"43":["e","TextTruncate","None"],"44":false,"45":["e","TextYAlignment","Center"],"46":true,"47":["f","rbxassetid://12187607287","Regular","Normal"],"48":"","49":["e","TextXAlignment","Center"],"50":0,"51":"Label","52":1,"53":["C",0,0,0],"54":["e","Font","Unknown"],"55":14,"56":-1,"57":["C",0.7058823704719543,0.7058823704719543,0.7058823704719543]},[]],[6,14,{"1":true,"58":["e","ApplyStrokeMode","Contextual"],"59":["e","LineJoinMode","Round"],"60":["C",0.38431376218795776,0.38431376218795776,0.38431376218795776],"61":0,"62":1},[]]]]]]}
+]================]
 
 local function make(className, parent, properties)
 	local instance = Instance.new(className)
@@ -20,14 +20,21 @@ local function make(className, parent, properties)
 	return instance
 end
 
-local function animate(instance, duration, properties, style, direction)
+local function animate(instance, duration, properties, style, direction, delay)
 	if not instance or not instance.Parent then
 		return nil
 	end
 
 	local tween = TweenService:Create(
 		instance,
-		TweenInfo.new(duration, style or Enum.EasingStyle.Quad, direction or Enum.EasingDirection.Out),
+		TweenInfo.new(
+			duration,
+			style or Enum.EasingStyle.Quad,
+			direction or Enum.EasingDirection.Out,
+			0,
+			false,
+			delay or 0
+		),
 		properties
 	)
 	tween:Play()
@@ -96,12 +103,46 @@ local function formatNumber(value)
 end
 
 local function addMethod(owner, implementation)
-	return function(first, second, third, fourth, fifth)
-		if first == owner then
-			return implementation(second, third, fourth, fifth)
+	return function(...)
+		if select(1, ...) == owner then
+			return implementation(select(2, ...))
 		end
-		return implementation(first, second, third, fourth, fifth)
+		return implementation(...)
 	end
+end
+
+local function flashRow(row)
+	if not row or not row.Parent then
+		return
+	end
+
+	local originalColor = row.BackgroundColor3
+	animate(row, 0.08, {
+		BackgroundColor3 = originalColor:Lerp(Color3.new(1, 1, 1), 0.055),
+	}, Enum.EasingStyle.Quad)
+	task.delay(0.09, function()
+		animate(row, 0.16, { BackgroundColor3 = originalColor }, Enum.EasingStyle.Quad)
+	end)
+end
+
+local function bounce(instance, name)
+	if not instance or not instance.Parent then
+		return
+	end
+
+	local scale = instance:FindFirstChild(name or "_VexiumScale")
+	if not scale then
+		scale = make("UIScale", instance, {
+			Name = name or "_VexiumScale",
+			Scale = 1,
+		})
+	end
+
+	scale.Scale = 0.94
+	animate(scale, 0.1, { Scale = 1.06 }, Enum.EasingStyle.Back)
+	task.delay(0.1, function()
+		animate(scale, 0.12, { Scale = 1 }, Enum.EasingStyle.Quad)
+	end)
 end
 
 local function attachHandleMethods(control, setter, getter)
@@ -116,25 +157,102 @@ local function attachHandleMethods(control, setter, getter)
 	return control
 end
 
-local function findTemplateGui(playerGui)
-	local screenGui = playerGui:FindFirstChild("cryptic")
-	if screenGui and screenGui:GetAttribute("VexiumLibraryWindow") then
-		screenGui = nil
+local function decodeEmbeddedValue(value)
+	if type(value) ~= "table" then
+		return value
 	end
 
-	if not screenGui then
-		local template = StarterGui:FindFirstChild("cryptic")
-		assert(template and template:IsA("ScreenGui"), "Vexium UI requires StarterGui.cryptic as its visual template.")
-		screenGui = template:Clone()
-		screenGui.Name = "VexiumUI"
-		screenGui.Parent = playerGui
+	local kind = value[1]
+	if kind == "C" then
+		return Color3.new(value[2], value[3], value[4])
+	elseif kind == "v" then
+		return Vector2.new(value[2], value[3])
+	elseif kind == "V" then
+		return Vector3.new(value[2], value[3], value[4])
+	elseif kind == "u" then
+		return UDim.new(value[2], value[3])
+	elseif kind == "U" then
+		return UDim2.new(value[2], value[3], value[4], value[5])
+	elseif kind == "e" then
+		return Enum[value[2]][value[3]]
+	elseif kind == "f" then
+		return Font.new(value[2], Enum.FontWeight[value[3]], Enum.FontStyle[value[4]])
+	elseif kind == "r" then
+		return Rect.new(value[2], value[3], value[4], value[5])
 	end
 
-	assert(screenGui:IsA("ScreenGui"), "StarterGui.cryptic must be a ScreenGui.")
+	return value
+end
+
+local function instantiateEmbeddedNode(node, parent, classNames, names, propertyNames)
+	local instance = Instance.new(classNames[node[1]])
+	instance.Name = names[node[2]]
+	local customFontFace
+
+	for propertyIndex, encodedValue in pairs(node[3]) do
+		local propertyName = propertyNames[tonumber(propertyIndex)]
+		if propertyName then
+			local decodedValue = decodeEmbeddedValue(encodedValue)
+			if propertyName == "FontFace" then
+				customFontFace = decodedValue
+			else
+				local ok, err = pcall(function()
+					instance[propertyName] = decodedValue
+				end)
+				if not ok then
+					warn("[Vexium UI] Could not apply embedded property " .. propertyName .. ": " .. tostring(err))
+				end
+			end
+		end
+	end
+
+	if customFontFace then
+		local ok, err = pcall(function()
+			instance.FontFace = customFontFace
+		end)
+		if not ok then
+			warn("[Vexium UI] Could not apply embedded property FontFace: " .. tostring(err))
+		end
+	end
+
+	for _, child in ipairs(node[4]) do
+		instantiateEmbeddedNode(child, instance, classNames, names, propertyNames)
+	end
+
+	instance.Parent = parent
+	return instance
+end
+
+local embeddedTemplateData
+local function buildEmbeddedTemplate(playerGui)
+	if not embeddedTemplateData then
+		embeddedTemplateData = HttpService:JSONDecode(EMBEDDED_TEMPLATE_JSON)
+	end
+
+	local screenGui = instantiateEmbeddedNode(
+		embeddedTemplateData.r,
+		nil,
+		embeddedTemplateData.c,
+		embeddedTemplateData.n,
+		embeddedTemplateData.p
+	)
+	screenGui.Name = "VexiumUI"
 	screenGui:SetAttribute("VexiumLibraryWindow", true)
 	screenGui.ResetOnSpawn = false
 	screenGui.Enabled = true
+	screenGui.Parent = playerGui
 	return screenGui
+end
+
+local function findTemplateGui(playerGui)
+	local staticMockup = playerGui:FindFirstChild("cryptic")
+	local staticMockupWasEnabled
+	if staticMockup and staticMockup:IsA("ScreenGui") then
+		staticMockupWasEnabled = staticMockup.Enabled
+		staticMockup.Enabled = false
+	end
+
+	return buildEmbeddedTemplate(playerGui), staticMockup, staticMockupWasEnabled
 end
 
 local function createActivationButton(parent, name, position, size, anchorPoint, zIndex)
@@ -159,18 +277,18 @@ local function makeWindow(title, topBarColor, toggleKey)
 	assert(player, "Vexium UI must be created from a client LocalScript.")
 
 	local playerGui = player:WaitForChild("PlayerGui")
-	local screenGui = findTemplateGui(playerGui)
+	local screenGui, staticMockup, staticMockupWasEnabled = findTemplateGui(playerGui)
 	local main = screenGui:FindFirstChild("main")
-	assert(main and main:IsA("Frame"), "StarterGui.cryptic.main is missing or is not a Frame.")
+	assert(main and main:IsA("Frame"), "Embedded Vexium UI is missing its main Frame.")
 
 	local topBar = main:FindFirstChild("TopBar")
 	local tabButtonContainer = main:FindFirstChild("TabButtonContainer")
 	local tabHolder = main:FindFirstChild("TabHolder")
-	assert(topBar and tabButtonContainer and tabHolder, "The cryptic template must contain TopBar, TabButtonContainer, and TabHolder.")
+	assert(topBar and tabButtonContainer and tabHolder, "Embedded Vexium UI is missing TopBar, TabButtonContainer, or TabHolder.")
 
 	local tabButtons = tabButtonContainer:FindFirstChild("Holder")
 	local firstPage = tabHolder:FindFirstChild("Home")
-	assert(tabButtons and firstPage, "The cryptic template must contain TabButtonContainer.Holder and TabHolder.Home.")
+	assert(tabButtons and firstPage, "Embedded Vexium UI is missing its tab button holder or home page.")
 
 	local templateNames = {
 		"Button",
@@ -186,12 +304,12 @@ local function makeWindow(title, topBarColor, toggleKey)
 	local templates = {}
 	for _, templateName in ipairs(templateNames) do
 		local template = firstPage:FindFirstChild(templateName)
-		assert(template, "StarterGui.cryptic.main.TabHolder.Home." .. templateName .. " is missing.")
+		assert(template, "Embedded Vexium UI is missing the " .. templateName .. " widget.")
 		templates[templateName] = template:Clone()
 	end
 
 	local navButtonTemplate = tabButtons:FindFirstChildWhichIsA("TextButton")
-	assert(navButtonTemplate, "StarterGui.cryptic.main.TabButtonContainer.Holder needs a TextButton template.")
+	assert(navButtonTemplate, "Embedded Vexium UI is missing its tab button widget.")
 	navButtonTemplate = navButtonTemplate:Clone()
 
 	local openedDropdownOptions = templates.Dropdown_Opened:FindFirstChild("Options")
@@ -204,11 +322,11 @@ local function makeWindow(title, topBarColor, toggleKey)
 			end
 		end
 	end
-	assert(optionTemplate, "StarterGui.cryptic Dropdown_Opened.Options needs an option Frame template.")
+	assert(optionTemplate, "Embedded Vexium UI is missing its dropdown option widget.")
 
 	local notificationSource = screenGui:FindFirstChild("notification")
 	local toastSource = screenGui:FindFirstChild("toast")
-	assert(notificationSource and toastSource, "StarterGui.cryptic must include notification and toast templates.")
+	assert(notificationSource and toastSource, "Embedded Vexium UI is missing its notification or toast widget.")
 	local notificationTemplate = notificationSource:Clone()
 	local toastTemplate = toastSource:Clone()
 	notificationSource.Visible = false
@@ -260,12 +378,48 @@ local function makeWindow(title, topBarColor, toggleKey)
 	end
 
 	local originalMainSize = main.Size
-	local originalClipsDescendants = main.ClipsDescendants
 	local baseWidth = math.max(1, main.AbsoluteSize.X)
 	local baseHeight = math.max(1, main.AbsoluteSize.Y)
 	local uiScale = main:FindFirstChildOfClass("UIScale")
 	if not uiScale then
 		uiScale = make("UIScale", main, { Scale = 1 })
+	end
+
+	local layoutWidth = originalMainSize.X.Offset > 0 and originalMainSize.X.Offset or baseWidth
+	local layoutHeight = originalMainSize.Y.Offset > 0 and originalMainSize.Y.Offset or baseHeight
+	for _, panel in ipairs({ tabButtonContainer, tabHolder }) do
+		local panelPosition = panel.Position
+		panel.Position = UDim2.new(
+			0,
+			math.round(panelPosition.X.Scale * layoutWidth) + panelPosition.X.Offset,
+			0,
+			math.round(panelPosition.Y.Scale * layoutHeight) + panelPosition.Y.Offset
+		)
+	end
+
+	local contentGroup = make("CanvasGroup", nil, {
+		Name = "Content",
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		GroupTransparency = 0,
+		Position = UDim2.new(0, 0, 0, 0),
+		Size = UDim2.new(1, 0, 1, 0),
+		ZIndex = 1,
+	})
+	tabButtonContainer.Parent = contentGroup
+	tabHolder.Parent = contentGroup
+	contentGroup.Parent = main
+	topBar.ZIndex = math.max(topBar.ZIndex, 3)
+
+	local fadeTargets = {}
+	for _, fadeName in ipairs({ "TopBar_Extension", "Border" }) do
+		local fadeObject = topBar:FindFirstChild(fadeName)
+		if fadeObject and fadeObject:IsA("GuiObject") then
+			table.insert(fadeTargets, {
+				instance = fadeObject,
+				transparency = fadeObject.BackgroundTransparency,
+			})
+		end
 	end
 
 	local window = {
@@ -279,8 +433,6 @@ local function makeWindow(title, topBarColor, toggleKey)
 		_activeKeybind = nil,
 	}
 
-	local navOverlay = main:FindFirstChild("TabButtonContainer")
-	local pagesOverlay = main:FindFirstChild("TabHolder")
 	local minimizeIcon = topBar:FindFirstChild("Minimize")
 	local maximizeIcon = topBar:FindFirstChild("Maximize")
 	local unloadIcon = topBar:FindFirstChild("Exit_Unload")
@@ -394,6 +546,17 @@ local function makeWindow(title, topBarColor, toggleKey)
 		end
 	end)
 
+	local chromeTweens = {}
+	local transitionRevision = 0
+	local minimizedSize = UDim2.new(originalMainSize.X.Scale, originalMainSize.X.Offset, originalMainSize.Y.Scale, topBar.Size.Y.Offset)
+
+	local function trackTween(tween)
+		if tween then
+			table.insert(chromeTweens, tween)
+		end
+		return tween
+	end
+
 	local function setMinimized(minimized)
 		if window._destroyed or window._minimized == minimized then
 			return
@@ -404,23 +567,19 @@ local function makeWindow(title, topBarColor, toggleKey)
 		maximizeIcon.Visible = minimized
 		maximizeButton.Visible = minimized
 
+		transitionRevision += 1
+		local revision = transitionRevision
 		if currentSizeTween then
 			currentSizeTween:Cancel()
 		end
+		for _, tween in ipairs(chromeTweens) do
+			tween:Cancel()
+		end
+		table.clear(chromeTweens)
+
 		local currentSize = main.Size
 		local currentPosition = main.Position
-		local targetSize
-		if minimized then
-			main.ClipsDescendants = true
-			navOverlay.Visible = false
-			pagesOverlay.Visible = false
-			local topBarHeight = topBar.Size.Y.Offset
-			targetSize = UDim2.new(originalMainSize.X.Scale, originalMainSize.X.Offset, originalMainSize.Y.Scale, topBarHeight)
-		else
-			navOverlay.Visible = true
-			pagesOverlay.Visible = true
-			targetSize = originalMainSize
-		end
+		local targetSize = minimized and minimizedSize or originalMainSize
 		local heightDelta = (targetSize.Y.Offset - currentSize.Y.Offset) * uiScale.Scale
 		local targetPosition = UDim2.new(
 			currentPosition.X.Scale,
@@ -434,13 +593,30 @@ local function makeWindow(title, topBarColor, toggleKey)
 			Size = targetSize,
 		})
 		currentSizeTween:Play()
-		if not minimized then
-			task.delay(0.23, function()
-				if not window._minimized and not window._destroyed then
-					main.ClipsDescendants = originalClipsDescendants
-				end
-			end)
+
+		for _, target in ipairs(fadeTargets) do
+			trackTween(animate(target.instance, 0.22, {
+				BackgroundTransparency = minimized and 1 or target.transparency,
+			}, Enum.EasingStyle.Quad))
 		end
+
+		if minimized then
+			trackTween(animate(contentGroup, 0.12, { GroupTransparency = 1 }, Enum.EasingStyle.Quad))
+		else
+			contentGroup.Visible = true
+			trackTween(animate(contentGroup, 0.18, { GroupTransparency = 0 }, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0.08))
+		end
+
+		task.delay(0.26, function()
+			if window._destroyed or revision ~= transitionRevision then
+				return
+			end
+			if minimized then
+				contentGroup.Visible = false
+			else
+				clampWindowPosition()
+			end
+		end)
 	end
 
 	window.minimize = function()
@@ -471,43 +647,164 @@ local function makeWindow(title, topBarColor, toggleKey)
 	local activeTab
 	local activeNotifications = {}
 	local activeToasts = {}
+	local cardVisuals = {}
 
-	local function renumberStack(items, template, isToast)
-		local basePosition = template.Position
-		local verticalSpacing = isToast and (template.Size.Y.Offset + 7) or (template.Size.Y.Offset + 8)
-		for index, card in ipairs(items) do
-			if card.Parent then
-				card.Position = UDim2.new(basePosition.X.Scale, basePosition.X.Offset, basePosition.Y.Scale, basePosition.Y.Offset + (isToast and 1 or -1) * (index - 1) * verticalSpacing)
+	local stackSettings = {
+		notification = {
+			anchor = Vector2.new(1, 1),
+			position = UDim2.new(1, -18, 1, -18),
+			direction = -1,
+			spacing = 94,
+			entryOffset = Vector2.new(24, 0),
+		},
+		toast = {
+			anchor = Vector2.new(0.5, 0),
+			position = UDim2.new(0.5, 0, 0, 18),
+			direction = 1,
+			spacing = 50,
+			entryOffset = Vector2.new(0, -14),
+		},
+	}
+
+	local function stackPosition(settings, index)
+		return UDim2.new(
+			settings.position.X.Scale,
+			settings.position.X.Offset,
+			settings.position.Y.Scale,
+			settings.position.Y.Offset + settings.direction * (index - 1) * settings.spacing
+		)
+	end
+
+	local function collectCardVisuals(card)
+		local visuals = {}
+		local function add(instance, property)
+			table.insert(visuals, {
+				instance = instance,
+				property = property,
+				value = instance[property],
+			})
+		end
+
+		add(card, "BackgroundTransparency")
+		for _, descendant in ipairs(card:GetDescendants()) do
+			if descendant:IsA("TextLabel") or descendant:IsA("TextBox") then
+				add(descendant, "TextTransparency")
+			elseif descendant:IsA("ImageLabel") or descendant:IsA("ImageButton") then
+				add(descendant, "ImageTransparency")
+			elseif descendant:IsA("Frame") then
+				add(descendant, "BackgroundTransparency")
+			elseif descendant:IsA("UIStroke") then
+				add(descendant, "Transparency")
+			end
+		end
+		return visuals
+	end
+
+	local function setCardAlpha(visuals, alpha)
+		for _, visual in ipairs(visuals) do
+			if visual.instance.Parent then
+				visual.instance[visual.property] = alpha
 			end
 		end
 	end
 
-	local function removeFromStack(items, card, template, isToast)
+	local function tweenCardAlpha(visuals, duration, alpha)
+		for _, visual in ipairs(visuals) do
+			if visual.instance.Parent then
+				animate(visual.instance, duration, {
+					[visual.property] = alpha == nil and visual.value or alpha,
+				}, Enum.EasingStyle.Quad)
+			end
+		end
+	end
+
+	local function styleMessageCard(card, isToast)
+		card.AnchorPoint = stackSettings[isToast and "toast" or "notification"].anchor
+		card.BackgroundColor3 = Color3.fromRGB(27, 27, 31)
+		card.ClipsDescendants = true
+
+		if isToast then
+			card.Size = UDim2.fromOffset(230, 42)
+		else
+			card.Size = UDim2.fromOffset(270, 86)
+		end
+
+		local stroke = card:FindFirstChildWhichIsA("UIStroke")
+		if stroke then
+			stroke.Color = accent:Lerp(Color3.new(1, 1, 1), 0.18)
+			stroke.Transparency = 0.35
+			stroke.Thickness = 1
+		end
+
+		local accentBar = card:FindFirstChild("Accent")
+		if not accentBar then
+			accentBar = make("Frame", card, {
+				Name = "Accent",
+				AnchorPoint = Vector2.new(0, 0.5),
+				BackgroundColor3 = accent,
+				BorderSizePixel = 0,
+				Position = UDim2.new(0, 0, 0.5, 0),
+				Size = UDim2.new(0, 3, 1, -18),
+				ZIndex = card.ZIndex + 1,
+			})
+			make("UICorner", accentBar, { CornerRadius = UDim.new(1, 0) })
+		end
+
+		local titleObject = card:FindFirstChild("title")
+		local textObject = card:FindFirstChild("text")
+		if titleObject and titleObject:IsA("TextLabel") then
+			titleObject.TextScaled = false
+			titleObject.TextSize = 15
+			titleObject.TextTruncate = Enum.TextTruncate.AtEnd
+			titleObject.TextXAlignment = Enum.TextXAlignment.Left
+			titleObject.Position = UDim2.fromOffset(16, 8)
+			titleObject.Size = UDim2.new(1, -28, 0, 19)
+			titleObject.ZIndex = card.ZIndex + 2
+		end
+		if textObject and textObject:IsA("TextLabel") then
+			textObject.TextScaled = false
+			textObject.TextSize = isToast and 14 or 13
+			textObject.TextWrapped = not isToast
+			textObject.TextTruncate = isToast and Enum.TextTruncate.AtEnd or Enum.TextTruncate.None
+			textObject.TextXAlignment = Enum.TextXAlignment.Left
+			textObject.TextYAlignment = isToast and Enum.TextYAlignment.Center or Enum.TextYAlignment.Top
+			textObject.Position = isToast and UDim2.fromOffset(16, 0) or UDim2.fromOffset(16, 30)
+			textObject.Size = isToast and UDim2.new(1, -28, 1, 0) or UDim2.new(1, -28, 0, 48)
+			textObject.ZIndex = card.ZIndex + 2
+		end
+
+		return titleObject, textObject
+	end
+
+	local function renumberStack(items, settings)
+		for index, card in ipairs(items) do
+			if card.Parent then
+				animate(card, 0.18, { Position = stackPosition(settings, index) }, Enum.EasingStyle.Quart)
+			end
+		end
+	end
+
+	local function removeFromStack(items, card, settings)
 		for index, existing in ipairs(items) do
 			if existing == card then
 				table.remove(items, index)
 				break
 			end
 		end
-		renumberStack(items, template, isToast)
+		renumberStack(items, settings)
 	end
 
-	local function fadeAndDestroy(card, items, template, isToast)
-		if not card.Parent then
+	local function fadeAndDestroy(card, items, settings)
+		if not card.Parent or card:GetAttribute("VexiumDismissing") then
 			return
 		end
-		for _, descendant in ipairs(card:GetDescendants()) do
-			if descendant:IsA("TextLabel") then
-				animate(descendant, 0.16, { TextTransparency = 1 })
-			elseif descendant:IsA("Frame") then
-				animate(descendant, 0.16, { BackgroundTransparency = 1 })
-			elseif descendant:IsA("UIStroke") then
-				animate(descendant, 0.16, { Transparency = 1 })
-			end
-		end
-		animate(card, 0.16, { BackgroundTransparency = 1 })
-		task.delay(0.18, function()
-			removeFromStack(items, card, template, isToast)
+		card:SetAttribute("VexiumDismissing", true)
+		tweenCardAlpha(cardVisuals[card] or {}, 0.15, 1)
+		local exitPosition = card.Position + UDim2.fromOffset(settings.entryOffset.X, settings.entryOffset.Y)
+		animate(card, 0.15, { Position = exitPosition }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+		task.delay(0.17, function()
+			removeFromStack(items, card, settings)
+			cardVisuals[card] = nil
 			if card.Parent then
 				card:Destroy()
 			end
@@ -520,11 +817,11 @@ local function makeWindow(title, topBarColor, toggleKey)
 		end
 		local template = isToast and toastTemplate or notificationTemplate
 		local card = template:Clone()
+		local settings = stackSettings[isToast and "toast" or "notification"]
 		card.Visible = true
 		card.Parent = screenGui
+		local titleObject, textObject = styleMessageCard(card, isToast)
 		local items = isToast and activeToasts or activeNotifications
-		local titleObject = card:FindFirstChild("title")
-		local textObject = card:FindFirstChild("text")
 		if isToast then
 			if textObject then
 				textObject.Text = tostring(message or "")
@@ -538,11 +835,20 @@ local function makeWindow(title, topBarColor, toggleKey)
 			end
 		end
 
+		card.Position = stackPosition(settings, #items + 1) + UDim2.fromOffset(settings.entryOffset.X, settings.entryOffset.Y)
+		cardVisuals[card] = collectCardVisuals(card)
+		setCardAlpha(cardVisuals[card], 1)
 		table.insert(items, card)
-		renumberStack(items, template, isToast)
+		renumberStack(items, settings)
+		tweenCardAlpha(cardVisuals[card], 0.2)
+		local dismiss = createActivationButton(card, "Dismiss", UDim2.new(), UDim2.fromScale(1, 1), Vector2.zero, card.ZIndex + 8)
+		local dismissBag = newConnectionBag(window)
+		dismissBag:Connect(dismiss.Activated, function()
+			fadeAndDestroy(card, items, settings)
+		end)
 		local lifetime = math.max(0, tonumber(duration) or 3)
 		task.delay(lifetime, function()
-			fadeAndDestroy(card, items, template, isToast)
+			fadeAndDestroy(card, items, settings)
 		end)
 		return card
 	end
@@ -646,21 +952,56 @@ local function makeWindow(title, topBarColor, toggleKey)
 			name = name,
 			_page = page,
 			_button = navButton,
+			_defaultButtonBackground = navButton.BackgroundColor3,
+			_defaultButtonText = navButton.TextColor3,
+			_selectedButtonBackground = navButton.BackgroundColor3:Lerp(Color3.new(1, 1, 1), 0.14),
+			_hoverButtonBackground = navButton.BackgroundColor3:Lerp(Color3.new(1, 1, 1), 0.06),
 			_controls = {},
 			_nextLayoutOrder = 3,
 		}
+		navButton.AutoButtonColor = false
 
 		local function selectTab()
+			if activeTab == tab then
+				return
+			end
 			for _, existingTab in ipairs(tabs) do
 				existingTab._page.Visible = false
+				animate(existingTab._button, 0.14, {
+					BackgroundColor3 = existingTab._defaultButtonBackground,
+					TextColor3 = existingTab._defaultButtonText,
+				}, Enum.EasingStyle.Quad)
 			end
 			page.Visible = true
+			local pageScale = page:FindFirstChild("_VexiumTabScale")
+			if not pageScale then
+				pageScale = make("UIScale", page, {
+					Name = "_VexiumTabScale",
+					Scale = 1,
+				})
+			end
+			pageScale.Scale = 0.975
+			animate(pageScale, 0.16, { Scale = 1 }, Enum.EasingStyle.Quart)
+			animate(navButton, 0.14, {
+				BackgroundColor3 = tab._selectedButtonBackground,
+				TextColor3 = Color3.fromRGB(245, 245, 248),
+			}, Enum.EasingStyle.Quad)
 			activeTab = tab
 			window._activeTab = tab
 		end
 
 		local tabBag = newConnectionBag(window)
 		tabBag:Connect(navButton.Activated, selectTab)
+		tabBag:Connect(navButton.MouseEnter, function()
+			if activeTab ~= tab then
+				animate(navButton, 0.12, { BackgroundColor3 = tab._hoverButtonBackground }, Enum.EasingStyle.Quad)
+			end
+		end)
+		tabBag:Connect(navButton.MouseLeave, function()
+			if activeTab ~= tab then
+				animate(navButton, 0.12, { BackgroundColor3 = tab._defaultButtonBackground }, Enum.EasingStyle.Quad)
+			end
+		end)
 		if not activeTab then
 			selectTab()
 		end
@@ -694,6 +1035,7 @@ local function makeWindow(title, topBarColor, toggleKey)
 			local hitbox = cloneHitbox(row, "Action", UDim2.new(0, 0, 0, 0), UDim2.fromScale(1, 1), Vector2.zero, row.ZIndex + 5)
 			local bag = newConnectionBag(window)
 			bag:Connect(hitbox.Activated, function()
+				flashRow(row)
 				invoke(callback)
 			end)
 			return register({ instance = row, button = hitbox })
@@ -710,9 +1052,16 @@ local function makeWindow(title, topBarColor, toggleKey)
 			assert(toggleBack and toggleBack:IsA("GuiObject"), "Toggle template is missing ToggleBtnBack.")
 			local value = not not initialValue
 			local originalColor = toggleBack.BackgroundColor3
+			local toggleTween
 			local function set(nextValue, notify)
 				value = not not nextValue
-				animate(toggleBack, 0.14, { BackgroundColor3 = value and accent or originalColor })
+				if toggleTween then
+					toggleTween:Cancel()
+				end
+				toggleTween = animate(toggleBack, 0.14, {
+					BackgroundColor3 = value and TOGGLE_ENABLED_COLOR or originalColor,
+				}, Enum.EasingStyle.Quad)
+				bounce(toggleBack, "_VexiumToggleScale")
 				if notify then
 					invoke(callback, value)
 				end
@@ -760,8 +1109,30 @@ local function makeWindow(title, topBarColor, toggleKey)
 			assert(textBox and textBox:IsA("TextBox"), "Input template is missing InputBox.")
 			textBox.Text = ""
 			textBox.PlaceholderText = tostring(placeholder or "")
+			local inputStroke = textBox:FindFirstChildWhichIsA("UIStroke")
+			local inputBackground = textBox.BackgroundColor3
+			local inputStrokeColor = inputStroke and inputStroke.Color
+			local inputStrokeTransparency = inputStroke and inputStroke.Transparency
 			local bag = newConnectionBag(window)
+			bag:Connect(textBox.Focused, function()
+				animate(textBox, 0.12, {
+					BackgroundColor3 = inputBackground:Lerp(accent, 0.22),
+				}, Enum.EasingStyle.Quad)
+				if inputStroke then
+					animate(inputStroke, 0.12, {
+						Color = accent,
+						Transparency = 0,
+					}, Enum.EasingStyle.Quad)
+				end
+			end)
 			bag:Connect(textBox.FocusLost, function()
+				animate(textBox, 0.14, { BackgroundColor3 = inputBackground }, Enum.EasingStyle.Quad)
+				if inputStroke then
+					animate(inputStroke, 0.14, {
+						Color = inputStrokeColor,
+						Transparency = inputStrokeTransparency,
+					}, Enum.EasingStyle.Quad)
+				end
 				invoke(callback, textBox.Text)
 			end)
 			local function set(value)
@@ -783,6 +1154,10 @@ local function makeWindow(title, topBarColor, toggleKey)
 			end
 			assert(textBox and textBox:IsA("TextBox"), "Keybind template is missing InputBox.")
 			local keyCode = normalizeKeyCode(initialKey)
+			local keyStroke = textBox:FindFirstChildWhichIsA("UIStroke")
+			local keyBackground = textBox.BackgroundColor3
+			local keyStrokeColor = keyStroke and keyStroke.Color
+			local keyStrokeTransparency = keyStroke and keyStroke.Transparency
 			local control = {
 				instance = row,
 				inputBox = textBox,
@@ -802,9 +1177,22 @@ local function makeWindow(title, topBarColor, toggleKey)
 			end
 			local bag = newConnectionBag(window)
 			bag:Connect(textBox.Focused, function()
+				animate(textBox, 0.12, {
+					BackgroundColor3 = keyBackground:Lerp(accent, 0.22),
+				}, Enum.EasingStyle.Quad)
+				if keyStroke then
+					animate(keyStroke, 0.12, { Color = accent, Transparency = 0 }, Enum.EasingStyle.Quad)
+				end
 				startListening(control)
 			end)
 			bag:Connect(textBox.FocusLost, function()
+				animate(textBox, 0.14, { BackgroundColor3 = keyBackground }, Enum.EasingStyle.Quad)
+				if keyStroke then
+					animate(keyStroke, 0.14, {
+						Color = keyStrokeColor,
+						Transparency = keyStrokeTransparency,
+					}, Enum.EasingStyle.Quad)
+				end
 				if window._activeKeybind == control then
 					window._activeKeybind = nil
 				end
@@ -833,13 +1221,56 @@ local function makeWindow(title, topBarColor, toggleKey)
 			local valueLabel = row:FindFirstChild("Value_Label")
 			if nameLabel and nameLabel:IsA("TextLabel") then
 				nameLabel.Text = tostring(controlName or "Slider")
+				nameLabel.Size = UDim2.new(1, -68, 0, 20)
+				nameLabel.Position = UDim2.fromOffset(0, 1)
+				nameLabel.TextSize = 16
+				nameLabel.TextTruncate = Enum.TextTruncate.AtEnd
 			end
 			assert(track and dot and valueLabel, "Slider template is missing its track, dot, or value label.")
+			row.Size = UDim2.new(row.Size.X.Scale, row.Size.X.Offset, 0, 44)
+			track.Active = true
+			track.Size = UDim2.fromOffset(205, 4)
+			track.Position = UDim2.new(0.5, 0, 0.78, 0)
+			dot.ZIndex = track.ZIndex + 2
+			valueLabel.Size = UDim2.fromOffset(44, 20)
+			valueLabel.Position = UDim2.new(1, -26, 0, 11)
+			valueLabel.TextScaled = false
+			valueLabel.TextSize = 16
+			valueLabel.TextTruncate = Enum.TextTruncate.AtEnd
+
+			local fill = make("Frame", track, {
+				Name = "Fill",
+				Active = false,
+				AnchorPoint = Vector2.new(0, 0.5),
+				BackgroundColor3 = Color3.fromRGB(177, 177, 177),
+				BorderSizePixel = 0,
+				Position = UDim2.new(0, 0, 0.5, 0),
+				Size = UDim2.new(0, 0, 1, 0),
+				ZIndex = track.ZIndex + 1,
+			})
+			make("UICorner", fill, { CornerRadius = UDim.new(1, 0) })
+			local dragSurface = cloneHitbox(
+				track,
+				"DragSurface",
+				UDim2.new(0, -8, 0.5, 0),
+				UDim2.new(1, 16, 0, 24),
+				Vector2.new(0, 0.5),
+				track.ZIndex + 4
+			)
 
 			local value = minValue
+			local dotTween
+			local fillTween
 			local function updateVisuals()
 				local alpha = maxValue == minValue and 0 or (value - minValue) / (maxValue - minValue)
-				dot.Position = UDim2.new(alpha, 0, 0.5, 0)
+				if dotTween then
+					dotTween:Cancel()
+				end
+				if fillTween then
+					fillTween:Cancel()
+				end
+				dotTween = animate(dot, 0.1, { Position = UDim2.new(alpha, 0, 0.5, 0) }, Enum.EasingStyle.Quad)
+				fillTween = animate(fill, 0.1, { Size = UDim2.new(alpha, 0, 1, 0) }, Enum.EasingStyle.Quad)
 				valueLabel.Text = formatNumber(value)
 			end
 			local function set(nextValue, notify)
@@ -870,11 +1301,11 @@ local function makeWindow(title, topBarColor, toggleKey)
 			local function startDrag(input)
 				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 					activeInput = input
+					bounce(dot, "_VexiumDotScale")
 					updateFromInput(input)
 				end
 			end
-			bag:Connect(track.InputBegan, startDrag)
-			bag:Connect(dot.InputBegan, startDrag)
+			bag:Connect(dragSurface.InputBegan, startDrag)
 			bag:Connect(UserInputService.InputChanged, function(input)
 				local mouseDrag = activeInput and activeInput.UserInputType == Enum.UserInputType.MouseButton1 and input.UserInputType == Enum.UserInputType.MouseMovement
 				local touchDrag = activeInput and activeInput.UserInputType == Enum.UserInputType.Touch and input == activeInput
@@ -932,9 +1363,34 @@ local function makeWindow(title, topBarColor, toggleKey)
 			end
 
 			local value = selected
-			local function setOpen(isOpen)
-				closed.Visible = not isOpen
-				opened.Visible = isOpen
+			local dropdownOpen = false
+			local openRevision = 0
+			local dropdownScale = make("UIScale", opened, {
+				Name = "_VexiumDropdownScale",
+				Scale = 1,
+			})
+			local function setOpen(shouldOpen)
+				if shouldOpen == dropdownOpen then
+					return
+				end
+				dropdownOpen = shouldOpen
+				openRevision += 1
+				local revision = openRevision
+				if shouldOpen then
+					closed.Visible = false
+					opened.Visible = true
+					dropdownScale.Scale = 0.94
+					animate(dropdownScale, 0.14, { Scale = 1 }, Enum.EasingStyle.Quart)
+				else
+					animate(dropdownScale, 0.1, { Scale = 0.96 }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+					task.delay(0.11, function()
+						if revision == openRevision and not dropdownOpen and opened.Parent then
+							opened.Visible = false
+							closed.Visible = true
+							dropdownScale.Scale = 1
+						end
+					end)
+				end
 			end
 			local function set(nextValue, notify)
 				value = nextValue
@@ -997,8 +1453,23 @@ local function makeWindow(title, topBarColor, toggleKey)
 		if currentDragTween then
 			currentDragTween:Cancel()
 		end
+		for _, tween in ipairs(chromeTweens) do
+			tween:Cancel()
+		end
 		if screenGui.Parent then
 			screenGui:Destroy()
+		end
+		if staticMockup and staticMockup.Parent and staticMockupWasEnabled then
+			local otherWindowExists = false
+			for _, child in ipairs(playerGui:GetChildren()) do
+				if child ~= screenGui and child:IsA("ScreenGui") and child:GetAttribute("VexiumLibraryWindow") then
+					otherWindowExists = true
+					break
+				end
+			end
+			if not otherWindowExists then
+				staticMockup.Enabled = true
+			end
 		end
 	end
 	window.unload = window.destroy
